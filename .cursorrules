@@ -1,0 +1,156 @@
+# Nyay AI - Digital Forensic Chain Ledger
+# Zero-Trust Access Control Rules
+
+## Layer 4: Role-Based Access Control (RBAC)
+
+### Role Definitions
+
+#### 1. Officer (Police Officer)
+- **ID Format**: OFF-XXXXX
+- **Permissions**:
+  - ✅ Register new evidence
+  - ✅ Transfer evidence custody
+  - ✅ Verify evidence integrity
+  - ✅ View full evidence details
+  - ✅ View lab findings
+  - ❌ Add lab findings
+- **Use Case**: Field officers who collect and register evidence at crime scenes
+
+#### 2. Lab Technician
+- **ID Format**: LAB-XXXXX
+- **Permissions**:
+  - ❌ Register new evidence
+  - ❌ Transfer evidence custody
+  - ✅ Verify evidence integrity
+  - ✅ View full evidence details
+  - ✅ View lab findings
+  - ✅ Add lab findings (DNA, Fingerprint, Toxicology, etc.)
+- **Use Case**: Forensic lab personnel who analyze evidence and add findings
+
+#### 3. Judge
+- **ID Format**: JDG-XXXXX
+- **Permissions**:
+  - ❌ Register new evidence
+  - ❌ Transfer evidence custody
+  - ✅ Verify evidence integrity
+  - ✅ View full evidence details (READ-ONLY)
+  - ✅ View complete chain of custody
+  - ✅ View lab findings
+  - ❌ Add lab findings
+- **Use Case**: Judicial officers who review evidence for court proceedings
+
+#### 4. Victim
+- **ID Format**: VIC-XXXXX
+- **Permissions**:
+  - ❌ Register new evidence
+  - ❌ Transfer evidence custody
+  - ❌ Verify evidence integrity
+  - ❌ View full evidence details
+  - ❌ View SHA-256 hashes (PRIVACY PROTECTED)
+  - ❌ View internal police notes (PRIVACY PROTECTED)
+  - ✅ View case status only
+  - ✅ View evidence ID and category
+  - ✅ View registration timestamp
+- **Use Case**: Victims who can track the status of evidence in their case
+- **Privacy Rule**: Must provide valid Case ID to view any information
+
+## Zero-Trust Implementation Rules
+
+### Rule 1: Permission Check Before Every Action
+```javascript
+// ALWAYS check permission before executing any action
+if (!checkPermission('action_name')) {
+    blockUnauthorizedAction('Action Name');
+    return;
+}
+```
+
+### Rule 2: Double Verification for Critical Actions
+```javascript
+// For sensitive operations (transfer, lab findings), check permission twice:
+// 1. Before opening modal/form
+// 2. Before executing the action
+```
+
+### Rule 3: UI-Level Access Control
+- Hide buttons/forms that the current role cannot access
+- Show appropriate error messages for unauthorized attempts
+- Display role-specific views of evidence data
+
+### Rule 4: Data Privacy Filters
+- **Victim Role**: Hide SHA-256 hashes, internal notes, officer details
+- **All Roles**: Only show data relevant to their permission level
+- **Case-Based Filtering**: Victims can only see evidence from their case ID
+
+### Rule 5: Immutability Rules
+- Evidence data cannot be edited (only appended)
+- Chain of custody is append-only
+- Lab findings are append-only
+- Tampered evidence cannot be transferred
+
+## Security Principles
+
+1. **Least Privilege**: Each role has minimum necessary permissions
+2. **Separation of Duties**: No single role can perform all actions
+3. **Audit Trail**: All actions are logged with role ID and timestamp
+4. **Privacy by Design**: Victim data is protected by default
+5. **Immutable Records**: Evidence integrity is maintained through cryptographic hashing
+
+## Implementation Checklist
+
+- [x] Role selector in UI header
+- [x] Permission configuration object (ROLE_PERMISSIONS)
+- [x] checkPermission() function for all actions
+- [x] blockUnauthorizedAction() for access denial
+- [x] Role-based UI rendering (show/hide elements)
+- [x] Privacy filters for Victim role
+- [x] Lab findings feature for Lab Technician
+- [x] Zero-trust validation in all critical functions
+- [x] Case ID filtering for Victim role
+
+## Testing Scenarios
+
+### Test 1: Officer Role
+- ✅ Can register evidence
+- ✅ Can transfer evidence
+- ✅ Can verify integrity
+- ✅ Can view full details
+
+### Test 2: Lab Technician Role
+- ❌ Cannot register evidence
+- ❌ Cannot transfer evidence
+- ✅ Can add lab findings
+- ✅ Can view full details
+
+### Test 3: Judge Role
+- ❌ Cannot register evidence
+- ❌ Cannot transfer evidence
+- ❌ Cannot add lab findings
+- ✅ Can view everything (read-only)
+
+### Test 4: Victim Role
+- ❌ Cannot perform any actions
+- ✅ Can view case status only
+- ❌ Cannot see SHA-256 hashes
+- ❌ Cannot see internal details
+- ✅ Must provide Case ID
+
+## Error Messages
+
+All unauthorized access attempts should display:
+```
+🚫 ACCESS DENIED
+
+Role: [Role Name]
+Action: [Action Attempted]
+
+You do not have permission to perform this action.
+```
+
+## Future Enhancements
+
+1. Multi-factor authentication for role switching
+2. Biometric verification for critical actions
+3. Time-based access restrictions
+4. Geolocation-based access control
+5. Blockchain integration for immutable audit logs
