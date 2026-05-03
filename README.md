@@ -3,7 +3,7 @@
 Nyay AI is a blockchain-inspired solution designed to ensure the integrity and transparency of digital forensic evidence. It provides a secure platform for registering, tracking, and verifying evidence using cryptographic hashing.
 
 ## 🚀 Live Demo
-[Click here to view the Live Project](YAHAN_APNA_LIVE_LINK_PASTE_KAREIN)
+[Click here to view the Live Project](https://arnubiswas20-dot.github.io/Nyay-AI/)
 
 ## ⚖️ The Problem
 In modern legal systems, maintaining the 'Chain of Custody' for digital evidence is challenging. Tampering or unauthorized access can lead to the dismissal of crucial evidence.
