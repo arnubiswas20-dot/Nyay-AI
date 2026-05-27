@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyay AI - Lab Technician Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-utils.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        }
+        .nav-active {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(109, 40, 217, 0.1) 100%);
+            border-left: 4px solid #8b5cf6;
+        }
+        .critical-alert {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .8;
+            }
+        }
+        .verification-success {
+            animation: successGlow 0.5s ease-out;
+        }
+        @keyframes successGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            100% {
+                box-shadow: 0 0 0 20px rgba(16, 185, 129, 0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- CRITICAL TAMPER ALERT BANNER (Hidden by default) -->
+    <div id="tamperAlertBanner" class="hidden fixed top-0 left-0 right-0 z-50 bg-red-600 text-white py-4 px-6 shadow-2xl critical-alert">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <svg class="w-8 h-8 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                    <h3 class="text-xl font-bold">🚨 CRITICAL: Cryptographic Hash Mismatch Detected!</h3>
+                    <p class="text-sm" id="tamperAlertMessage">Chain of Custody Broken - Evidence Integrity Compromised</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs opacity-90">Evidence ID: <span id="tamperedEvidenceId" class="font-mono font-bold"></span></p>
+                <p class="text-xs opacity-90">Alert Time: <span id="tamperAlertTime"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">⚖️ Nyay AI</h1>
+                        <p class="text-sm opacity-90">Lab Technician Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm font-semibold" id="userName">Lab Tech Name</p>
+                        <p class="text-xs opacity-75" id="userCredential">LAB-XXX</p>
+                    </div>
+                    <button id="logoutBtn" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-4 sticky top-24">
+                    <h2 class="font-bold text-gray-800 mb-4">Navigation</h2>
+                    <nav class="space-y-2">
+                        <button class="nav-btn nav-active w-full text-left px-4 py-3 rounded-lg transition" data-section="verify">
+                            🔍 Verify Integrity
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="findings">
+                            🧪 Add Lab Findings
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="evidence">
+                            📋 All Evidence
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="alerts">
+                            🚨 Tamper Alerts
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-3">
+                <!-- Verify Integrity Section -->
+                <div id="verifySection" class="content-section">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🔍 Verify Evidence Integrity</h2>
+                        
+                        <!-- Info Banner -->
+                        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-6 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 text-purple-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <h3 class="font-semibold text-purple-900">Cryptographic Verification Process</h3>
+                                    <p class="text-sm text-purple-800 mt-1">Upload the physical evidence photo received at the lab. The system will calculate its SHA-256 hash and compare it with the original registration hash to detect any tampering.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verification Form -->
+                        <form id="verifyForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Evidence to Verify *</label>
+                                <select id="evidenceSelect" required 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                    <option value="">-- Select Evidence --</option>
+                                </select>
+                            </div>
+
+                            <div id="evidenceDetails" class="hidden bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-800 mb-3">Original Evidence Details</h3>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p class="text-gray-600">Evidence ID:</p>
+                                        <p class="font-mono font-bold" id="detailId"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">Type:</p>
+                                        <p class="font-semibold" id="detailType"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">Registered By:</p>
+                                        <p id="detailRegisteredBy"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">Timestamp:</p>
+                                        <p class="text-xs" id="detailTimestamp"></p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <p class="text-gray-600 text-sm mb-1">Original Photo Hash (SHA-256):</p>
+                                    <p class="font-mono text-xs bg-white p-2 rounded border break-all" id="detailOriginalHash"></p>
+                                </div>
+                                <div class="mt-3">
+                                    <img id="detailOriginalPhoto" src="" alt="Original" class="w-full max-w-md rounded-lg border-2 border-gray-300">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Arrival Photo (Physical Evidence) *</label>
+                                <div class="flex items-center justify-center w-full">
+                                    <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPrompt">
+                                            <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                            </svg>
+                                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> arrival photo</p>
+                                            <p class="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB)</p>
+                                        </div>
+                                        <img id="arrivalPhotoPreview" class="hidden w-full h-full object-contain rounded-lg" alt="Arrival Photo">
+                                        <input id="arrivalPhotoInput" type="file" accept="image/*" required class="hidden">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="verifyBtn"
+                                    class="w-full px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
+                                🔐 Verify Cryptographic Hash
+                            </button>
+                        </form>
+
+                        <!-- Verification Result -->
+                        <div id="verificationResult" class="hidden mt-6"></div>
+                    </div>
+                </div>
+
+                <!-- Lab Findings Section -->
+                <div id="findingsSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🧪 Add Lab Findings</h2>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Note:</strong> Lab findings can only be added to evidence that has been successfully verified (hash match confirmed).
+                            </p>
+                        </div>
+
+                        <form id="findingsForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Verified Evidence *</label>
+                                <select id="verifiedEvidenceSelect" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    <option value="">-- Select Evidence --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Finding Type *</label>
+                                <select id="findingType" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Select Type</option>
+                                    <option value="DNA Analysis">DNA Analysis</option>
+                                    <option value="Fingerprint">Fingerprint Analysis</option>
+                                    <option value="Toxicology">Toxicology Report</option>
+                                    <option value="Ballistics">Ballistics Analysis</option>
+                                    <option value="Blood Analysis">Blood Analysis</option>
+                                    <option value="Trace Evidence">Trace Evidence</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Lab Findings *</label>
+                                <textarea id="findingDetails" required rows="5"
+                                          placeholder="Enter detailed lab analysis findings..."
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Conclusion</label>
+                                <textarea id="findingConclusion" rows="3"
+                                          placeholder="Summary and conclusion..."
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                            </div>
+
+                            <!-- FSL Report Document Upload -->
+                            <div class="border-t pt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">📁 Upload Official Signed FSL Report Document *</label>
+                                <div class="flex items-center justify-center w-full">
+                                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6" id="fslUploadPrompt">
+                                            <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                            </svg>
+                                            <p class="text-sm text-gray-500"><span class="font-semibold">Click to upload</span> FSL report</p>
+                                            <p class="text-xs text-gray-500">PDF, PNG, JPG (MAX. 10MB)</p>
+                                        </div>
+                                        <div id="fslFileInfo" class="hidden w-full px-4 py-2">
+                                            <p class="text-sm text-green-600 font-semibold text-center">✓ <span id="fslFileName"></span></p>
+                                            <p class="text-xs text-gray-500 text-center">Hash: <span id="fslFileHash" class="font-mono"></span></p>
+                                        </div>
+                                        <input id="fslReportInput" type="file" accept=".pdf,.png,.jpg,.jpeg" required class="hidden">
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Document will be hashed using SHA-256 for integrity verification</p>
+                            </div>
+
+                            <button type="submit" class="w-full px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
+                                📝 Submit Lab Finding with FSL Report
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- All Evidence Section -->
+                <div id="evidenceSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-gray-800">📦 Incoming Evidence Queue</h2>
+                            <button id="refreshEvidence" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded">
+                            <p class="text-sm text-blue-800">
+                                <strong>Dynamic Queue:</strong> Evidence appears here only after Officers or Medical Officers transfer custody to the lab.
+                            </p>
+                        </div>
+                        
+                        <div id="incomingQueue" class="mb-6">
+                            <h3 class="font-semibold text-gray-800 mb-3">🔔 Incoming Samples</h3>
+                            <div id="incomingQueueList">
+                                <p class="text-gray-500 text-center py-8">No incoming samples received yet.</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="font-semibold text-gray-800 mb-3">All Evidence in Lab</h3>
+                            <div id="evidenceList">
+                                <p class="text-gray-500 text-center py-8">No evidence available.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tamper Alerts Section -->
+                <div id="alertsSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🚨 Tamper Alerts</h2>
+                        <div id="alertsList">
+                            <p class="text-gray-500 text-center py-8">No tamper alerts.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSession = null;
+        let selectedEvidence = null;
+        let arrivalPhotoBase64 = null;
+        let arrivalPhotoHash = null;
+        let fslReportBase64 = null;
+        let fslReportHash = null;
+        let fslReportFileName = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            currentSession = NyayAI.validateSession('LAB_TECHNICIAN');
+            if (!currentSession) return;
+
+            document.getElementById('userName').textContent = currentSession.name;
+            document.getElementById('userCredential').textContent = currentSession.credentialId;
+
+            setupEventListeners();
+            loadIncomingQueue();
+            loadEvidenceList();
+            loadVerifiedEvidenceList();
+            loadTamperAlerts();
+        });
+
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchSection(this.dataset.section);
+                });
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('evidenceSelect').addEventListener('change', handleEvidenceSelection);
+            document.getElementById('arrivalPhotoInput').addEventListener('change', handleArrivalPhotoUpload);
+            document.getElementById('fslReportInput').addEventListener('change', handleFSLReportUpload);
+            document.getElementById('verifyForm').addEventListener('submit', handleVerification);
+            document.getElementById('findingsForm').addEventListener('submit', handleFindingSubmit);
+            document.getElementById('refreshEvidence').addEventListener('click', function() {
+                loadIncomingQueue();
+                loadEvidenceList();
+            });
+        }
+
+        function switchSection(section) {
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-active'));
+            
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            document.querySelector(`[data-section="${section}"]`).classList.add('nav-active');
+
+            if (section === 'evidence') {
+                loadIncomingQueue();
+                loadEvidenceList();
+            }
+            if (section === 'alerts') loadTamperAlerts();
+            if (section === 'findings') loadVerifiedEvidenceList();
+        }
+
+        function loadIncomingQueue() {
+            const queue = JSON.parse(localStorage.getItem('nyai_lab_incoming_queue') || '[]');
+            const container = document.getElementById('incomingQueueList');
+
+            if (queue.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No incoming samples received yet.</p>';
+                return;
+            }
+
+            container.innerHTML = queue.map(item => {
+                let evidence = null;
+                if (item.type === 'CRIME_SCENE_EVIDENCE') {
+                    evidence = NyayAI.getEvidence(item.id);
+                } else if (item.type === 'BIOLOGICAL_SAMPLE') {
+                    evidence = JSON.parse(localStorage.getItem(`nyai_biological_${item.id}`) || 'null');
+                }
+
+                if (!evidence) return '';
+
+                return `
+                    <div class="border-2 border-blue-500 bg-blue-50 rounded-lg p-4 mb-3">
+                        <div class="flex items-start">
+                            <svg class="w-6 h-6 text-blue-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                            </svg>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-blue-900 mb-1">NEW: ${item.id}</h3>
+                                <p class="text-sm text-blue-800 mb-1"><strong>Type:</strong> ${item.type.replace(/_/g, ' ')}</p>
+                                <p class="text-sm text-blue-800 mb-1"><strong>From:</strong> ${item.from.replace(/_/g, ' ')}</p>
+                                <p class="text-xs text-blue-700">Received: ${NyayAI.formatTimestamp(item.timestamp)}</p>
+                                <button onclick="acknowledgeReceipt('${item.id}', '${item.type}')" class="mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition">
+                                    ✓ Acknowledge Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function acknowledgeReceipt(itemId, itemType) {
+            // Remove from incoming queue
+            let queue = JSON.parse(localStorage.getItem('nyai_lab_incoming_queue') || '[]');
+            queue = queue.filter(item => item.id !== itemId);
+            localStorage.setItem('nyai_lab_incoming_queue', JSON.stringify(queue));
+
+            // Update evidence status
+            if (itemType === 'CRIME_SCENE_EVIDENCE') {
+                NyayAI.updateEvidence(itemId, {
+                    status: 'Received at Lab',
+                    labReceiptTime: new Date().toISOString(),
+                    receivedBy: currentSession.name
+                });
+            } else if (itemType === 'BIOLOGICAL_SAMPLE') {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${itemId}`));
+                if (sample) {
+                    sample.status = 'Received at Lab';
+                    sample.labReceiptTime = new Date().toISOString();
+                    sample.receivedBy = currentSession.name;
+                    localStorage.setItem(`nyai_biological_${itemId}`, JSON.stringify(sample));
+                }
+            }
+
+            NyayAI.logAction('LAB_RECEIPT_ACKNOWLEDGED', {
+                itemId: itemId,
+                itemType: itemType
+            });
+
+            alert('✅ Receipt acknowledged successfully!');
+            loadIncomingQueue();
+            loadEvidenceList();
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                NyayAI.clearSession();
+                window.location.href = 'index.html';
+            }
+        }
+
+        function loadEvidenceList() {
+            const evidenceList = JSON.parse(localStorage.getItem('nyai_evidence_list') || '[]');
+            const biologicalList = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+            const select = document.getElementById('evidenceSelect');
+            const container = document.getElementById('evidenceList');
+
+            // Populate select dropdown with received evidence only
+            select.innerHTML = '<option value="">-- Select Evidence --</option>';
+            
+            // Add police evidence
+            evidenceList.forEach(id => {
+                const evidence = NyayAI.getEvidence(id);
+                if (evidence && evidence.status && evidence.status.includes('Lab')) {
+                    select.innerHTML += `<option value="nyai_evidence_${id}">${id} - ${evidence.type}</option>`;
+                }
+            });
+
+            // Add biological samples
+            biologicalList.forEach(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`) || 'null');
+                if (sample && sample.status && sample.status.includes('Lab')) {
+                    select.innerHTML += `<option value="nyai_biological_${id}">${id} - BIOLOGICAL SAMPLE</option>`;
+                }
+            });
+
+            // Display evidence received at lab
+            const labEvidence = evidenceList.filter(id => {
+                const evidence = NyayAI.getEvidence(id);
+                return evidence && evidence.status && evidence.status.includes('Lab');
+            });
+
+            const labSamples = biologicalList.filter(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`) || 'null');
+                return sample && sample.status && sample.status.includes('Lab');
+            });
+
+            if (labEvidence.length === 0 && labSamples.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No evidence received at lab yet.</p>';
+                return;
+            }
+
+            let html = '';
+
+            // Crime scene evidence
+            html += labEvidence.map(id => {
+                const evidence = NyayAI.getEvidence(id);
+                if (!evidence) return '';
+
+                const statusColor = evidence.verificationStatus === 'VERIFIED' ? 'green' :
+                                   evidence.verificationStatus === 'TAMPERED' ? 'red' : 'yellow';
+                
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="font-mono font-bold text-purple-600">${evidence.id}</span>
+                                    <span class="px-2 py-1 bg-${statusColor}-100 text-${statusColor}-800 text-xs rounded font-semibold">
+                                        ${evidence.verificationStatus}
+                                    </span>
+                                    ${evidence.isTampered ? '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded font-bold">⚠️ TAMPERED</span>' : ''}
+                                </div>
+                                <p class="text-sm text-gray-600"><strong>Type:</strong> ${evidence.type}</p>
+                                <p class="text-sm text-gray-600"><strong>Status:</strong> ${evidence.status}</p>
+                                <p class="text-sm text-gray-600"><strong>Registered:</strong> ${NyayAI.formatTimestamp(evidence.timestamp)}</p>
+                                ${evidence.labReceiptTime ? `<p class="text-sm text-green-600"><strong>Received:</strong> ${NyayAI.formatTimestamp(evidence.labReceiptTime)}</p>` : ''}
+                            </div>
+                            <img src="${evidence.photo}" alt="Evidence" class="w-20 h-20 object-cover rounded ml-4">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Biological samples
+            html += labSamples.map(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`) || 'null');
+                if (!sample) return '';
+
+                const statusColor = sample.verificationStatus === 'VERIFIED' ? 'green' :
+                                   sample.verificationStatus === 'TAMPERED' ? 'red' : 'yellow';
+
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="font-mono font-bold text-blue-600">${sample.id}</span>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">BIOLOGICAL</span>
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">${sample.type}</span>
+                                    ${sample.verificationStatus ? `<span class="px-2 py-1 bg-${statusColor}-100 text-${statusColor}-800 text-xs rounded font-semibold">${sample.verificationStatus}</span>` : ''}
+                                    ${sample.isTampered ? '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded font-bold">⚠️ TAMPERED</span>' : ''}
+                                </div>
+                                <p class="text-sm text-gray-600"><strong>Status:</strong> ${sample.status}</p>
+                                <p class="text-sm text-gray-600"><strong>Related MLC:</strong> ${sample.relatedMLC}</p>
+                                ${sample.labReceiptTime ? `<p class="text-sm text-green-600"><strong>Received:</strong> ${NyayAI.formatTimestamp(sample.labReceiptTime)}</p>` : ''}
+                            </div>
+                            <img src="${sample.photo}" alt="Sample" class="w-20 h-20 object-cover rounded ml-4">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function handleEvidenceSelection(event) {
+            const storageKey = event.target.value;
+            if (!storageKey) {
+                document.getElementById('evidenceDetails').classList.add('hidden');
+                return;
+            }
+
+            // Determine if it's police evidence or biological sample
+            if (storageKey.startsWith('nyai_evidence_')) {
+                // Police evidence
+                const evidenceId = storageKey.replace('nyai_evidence_', '');
+                selectedEvidence = NyayAI.getEvidence(evidenceId);
+                if (!selectedEvidence) return;
+
+                document.getElementById('detailId').textContent = selectedEvidence.id;
+                document.getElementById('detailType').textContent = selectedEvidence.type;
+                document.getElementById('detailRegisteredBy').textContent = selectedEvidence.registeredBy || selectedEvidence.name;
+                document.getElementById('detailTimestamp').textContent = NyayAI.formatTimestamp(selectedEvidence.timestamp);
+                document.getElementById('detailOriginalHash').textContent = selectedEvidence.photoHash;
+                document.getElementById('detailOriginalPhoto').src = selectedEvidence.photo;
+            } else if (storageKey.startsWith('nyai_biological_')) {
+                // Biological sample
+                const sample = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                if (!sample) return;
+
+                selectedEvidence = sample;
+                document.getElementById('detailId').textContent = sample.id + ' (Sample ID)';
+                document.getElementById('detailType').textContent = sample.type + ' (Sample Type)';
+                document.getElementById('detailRegisteredBy').textContent = 'Related MLC: ' + sample.relatedMLC;
+                document.getElementById('detailTimestamp').textContent = NyayAI.formatTimestamp(sample.timestamp);
+                document.getElementById('detailOriginalHash').textContent = sample.photoHash;
+                document.getElementById('detailOriginalPhoto').src = sample.photo;
+            }
+
+            document.getElementById('evidenceDetails').classList.remove('hidden');
+        }
+
+        async function handleArrivalPhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                arrivalPhotoBase64 = e.target.result;
+                
+                const preview = document.getElementById('arrivalPhotoPreview');
+                const prompt = document.getElementById('uploadPrompt');
+                preview.src = arrivalPhotoBase64;
+                preview.classList.remove('hidden');
+                prompt.classList.add('hidden');
+
+                arrivalPhotoHash = await NyayAI.generateSHA256(arrivalPhotoBase64);
+                console.log('Arrival photo hash:', arrivalPhotoHash);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleFSLReportUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                event.target.value = '';
+                return;
+            }
+
+            fslReportFileName = file.name;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                fslReportBase64 = e.target.result;
+                
+                // Generate hash
+                fslReportHash = await NyayAI.generateSHA256(fslReportBase64);
+                
+                // Update UI
+                document.getElementById('fslUploadPrompt').classList.add('hidden');
+                document.getElementById('fslFileInfo').classList.remove('hidden');
+                document.getElementById('fslFileName').textContent = fslReportFileName;
+                document.getElementById('fslFileHash').textContent = fslReportHash.substring(0, 32) + '...';
+                
+                console.log('FSL Report hash generated:', fslReportHash);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleVerification(event) {
+            event.preventDefault();
+
+            if (!selectedEvidence) {
+                alert('Please select evidence to verify');
+                return;
+            }
+
+            if (!arrivalPhotoBase64) {
+                alert('Please upload arrival photo');
+                return;
+            }
+
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = '⏳ Verifying...';
+
+            try {
+                const originalHash = selectedEvidence.photoHash;
+                const match = originalHash === arrivalPhotoHash;
+
+                // Determine if it's police evidence or biological sample
+                const isBiological = selectedEvidence.id && selectedEvidence.id.startsWith('BIO-');
+
+                // Update evidence status
+                if (match) {
+                    if (isBiological) {
+                        // Update biological sample
+                        selectedEvidence.verificationStatus = 'VERIFIED';
+                        selectedEvidence.isTampered = false;
+                        selectedEvidence.verifiedBy = currentSession.name;
+                        selectedEvidence.verifiedAt = new Date().toISOString();
+                        selectedEvidence.arrivalPhotoHash = arrivalPhotoHash;
+                        localStorage.setItem(`nyai_biological_${selectedEvidence.id}`, JSON.stringify(selectedEvidence));
+                    } else {
+                        // Update police evidence
+                        NyayAI.updateEvidence(selectedEvidence.id, {
+                            verificationStatus: 'VERIFIED',
+                            isTampered: false,
+                            verifiedBy: currentSession.name,
+                            verifiedAt: new Date().toISOString(),
+                            arrivalPhotoHash: arrivalPhotoHash
+                        });
+                    }
+
+                    showVerificationSuccess();
+                } else {
+                    if (isBiological) {
+                        // Update biological sample
+                        selectedEvidence.verificationStatus = 'TAMPERED';
+                        selectedEvidence.isTampered = true;
+                        selectedEvidence.verifiedBy = currentSession.name;
+                        selectedEvidence.verifiedAt = new Date().toISOString();
+                        selectedEvidence.arrivalPhotoHash = arrivalPhotoHash;
+                        localStorage.setItem(`nyai_biological_${selectedEvidence.id}`, JSON.stringify(selectedEvidence));
+                    } else {
+                        // Update police evidence
+                        NyayAI.updateEvidence(selectedEvidence.id, {
+                            verificationStatus: 'TAMPERED',
+                            isTampered: true,
+                            verifiedBy: currentSession.name,
+                            verifiedAt: new Date().toISOString(),
+                            arrivalPhotoHash: arrivalPhotoHash
+                        });
+                    }
+
+                    // Create tamper alert
+                    NyayAI.createTamperAlert(selectedEvidence.id, {
+                        originalHash: originalHash,
+                        arrivalHash: arrivalPhotoHash,
+                        verifiedBy: currentSession.name
+                    });
+
+                    showTamperAlert(selectedEvidence.id);
+                }
+
+                // Log verification
+                NyayAI.logAction('INTEGRITY_VERIFICATION', {
+                    evidenceId: selectedEvidence.id,
+                    result: match ? 'VERIFIED' : 'TAMPERED',
+                    originalHash: originalHash.substring(0, 16),
+                    arrivalHash: arrivalPhotoHash.substring(0, 16)
+                });
+
+                loadEvidenceList();
+                loadVerifiedEvidenceList();
+
+            } catch (error) {
+                alert('Error during verification: ' + error.message);
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '🔐 Verify Cryptographic Hash';
+            }
+        }
+
+        function showVerificationSuccess() {
+            const resultDiv = document.getElementById('verificationResult');
+            resultDiv.className = 'mt-6 bg-green-50 border-2 border-green-500 rounded-lg p-6 verification-success';
+            resultDiv.innerHTML = `
+                <div class="flex items-start">
+                    <svg class="w-12 h-12 text-green-500 mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-green-900 mb-2">🟢 Verification Successful: Integrity Intact</h3>
+                        <p class="text-green-800 mb-3">The cryptographic hash of the arrival photo matches the original registration hash. Evidence integrity is confirmed.</p>
+                        <div class="bg-white p-3 rounded border border-green-300">
+                            <p class="text-sm text-gray-700 mb-1"><strong>Evidence ID:</strong> ${selectedEvidence.id}</p>
+                            <p class="text-sm text-gray-700 mb-1"><strong>Original Hash:</strong> <span class="font-mono text-xs">${selectedEvidence.photoHash.substring(0, 32)}...</span></p>
+                            <p class="text-sm text-gray-700"><strong>Arrival Hash:</strong> <span class="font-mono text-xs">${arrivalPhotoHash.substring(0, 32)}...</span></p>
+                        </div>
+                        <p class="text-sm text-green-700 mt-3">✅ Lab findings form is now unlocked for this evidence.</p>
+                    </div>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function showTamperAlert(evidenceId) {
+            const banner = document.getElementById('tamperAlertBanner');
+            document.getElementById('tamperedEvidenceId').textContent = evidenceId;
+            document.getElementById('tamperAlertTime').textContent = new Date().toLocaleString();
+            banner.classList.remove('hidden');
+
+            const resultDiv = document.getElementById('verificationResult');
+            resultDiv.className = 'mt-6 bg-red-50 border-2 border-red-600 rounded-lg p-6';
+            resultDiv.innerHTML = `
+                <div class="flex items-start">
+                    <svg class="w-12 h-12 text-red-600 mr-4 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-red-900 mb-2">🚨 CRITICAL: Cryptographic Hash Mismatch!</h3>
+                        <p class="text-red-800 mb-3 font-semibold">Chain of Custody Broken - Evidence Integrity Compromised</p>
+                        <div class="bg-white p-3 rounded border border-red-400">
+                            <p class="text-sm text-gray-700 mb-1"><strong>Evidence ID:</strong> ${selectedEvidence.id}</p>
+                            <p class="text-sm text-red-700 mb-1"><strong>Original Hash:</strong> <span class="font-mono text-xs">${selectedEvidence.photoHash.substring(0, 32)}...</span></p>
+                            <p class="text-sm text-red-700"><strong>Arrival Hash:</strong> <span class="font-mono text-xs">${arrivalPhotoHash.substring(0, 32)}...</span></p>
+                        </div>
+                        <div class="mt-4 bg-red-100 p-3 rounded">
+                            <p class="text-sm text-red-900 font-bold">⚠️ ALERT: This evidence has been flagged as tampered.</p>
+                            <p class="text-sm text-red-800 mt-1">• All modifications are now blocked</p>
+                            <p class="text-sm text-red-800">• Tamper alert has been logged</p>
+                            <p class="text-sm text-red-800">• Forensic custody chain has been notified</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function loadVerifiedEvidenceList() {
+            const evidenceList = JSON.parse(localStorage.getItem('nyai_evidence_list') || '[]');
+            const biologicalList = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+            const select = document.getElementById('verifiedEvidenceSelect');
+
+            select.innerHTML = '<option value="">-- Select Evidence --</option>';
+            
+            // Add verified police evidence
+            evidenceList.forEach(id => {
+                const evidence = NyayAI.getEvidence(id);
+                if (evidence && evidence.verificationStatus === 'VERIFIED' && !evidence.isTampered) {
+                    select.innerHTML += `<option value="${id}">${id} - ${evidence.type}</option>`;
+                }
+            });
+
+            // Add verified biological samples
+            biologicalList.forEach(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`) || 'null');
+                if (sample && sample.verificationStatus === 'VERIFIED' && !sample.isTampered) {
+                    select.innerHTML += `<option value="${id}">${id} - ${sample.type} (BIOLOGICAL)</option>`;
+                }
+            });
+        }
+
+        async function handleFindingSubmit(event) {
+            event.preventDefault();
+
+            const evidenceId = document.getElementById('verifiedEvidenceSelect').value;
+            
+            // Check if it's a biological sample or police evidence
+            let evidence = null;
+            let isBiological = evidenceId.startsWith('BIO-');
+            
+            if (isBiological) {
+                // Look up biological sample
+                evidence = JSON.parse(localStorage.getItem(`nyai_biological_${evidenceId}`) || 'null');
+            } else {
+                // Look up police evidence
+                evidence = NyayAI.getEvidence(evidenceId);
+            }
+
+            if (!evidence || evidence.verificationStatus !== 'VERIFIED') {
+                alert('Evidence must be verified before adding findings');
+                return;
+            }
+
+            if (!fslReportBase64 || !fslReportHash) {
+                alert('Please upload the official FSL report document');
+                return;
+            }
+
+            const finding = {
+                type: document.getElementById('findingType').value,
+                details: document.getElementById('findingDetails').value,
+                conclusion: document.getElementById('findingConclusion').value,
+                technician: currentSession.name,
+                technicianId: currentSession.credentialId,
+                fslReportFileName: fslReportFileName,
+                fslReportHash: fslReportHash,
+                fslReportDocument: fslReportBase64
+            };
+
+            NyayAI.addLabFinding(evidenceId, finding);
+
+            // Update biological sample status to REPORTED_BY_LAB
+            if (isBiological) {
+                evidence.status = 'REPORTED_BY_LAB';
+                localStorage.setItem(`nyai_biological_${evidenceId}`, JSON.stringify(evidence));
+            }
+
+            NyayAI.logAction('LAB_FINDING_WITH_FSL_REPORT', {
+                evidenceId: evidenceId,
+                findingType: finding.type,
+                fslReportHash: fslReportHash.substring(0, 32),
+                isBiological: isBiological
+            });
+
+            alert('✅ Lab finding with FSL report added successfully!');
+            document.getElementById('findingsForm').reset();
+            
+            // Reset FSL upload UI
+            fslReportBase64 = null;
+            fslReportHash = null;
+            fslReportFileName = null;
+            document.getElementById('fslUploadPrompt').classList.remove('hidden');
+            document.getElementById('fslFileInfo').classList.add('hidden');
+        }
+
+        function loadTamperAlerts() {
+            const alerts = NyayAI.getTamperAlerts();
+            const container = document.getElementById('alertsList');
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No tamper alerts.</p>';
+                return;
+            }
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="border-2 border-red-500 bg-red-50 rounded-lg p-4 mb-3">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-red-900 mb-1">TAMPER ALERT: ${alert.evidenceId}</h3>
+                            <p class="text-sm text-red-800 mb-2">${alert.severity} - Hash mismatch detected</p>
+                            <p class="text-xs text-red-700">Detected: ${NyayAI.formatTimestamp(alert.timestamp)}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

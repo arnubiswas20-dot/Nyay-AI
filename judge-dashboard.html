@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyay AI - Judge Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-utils.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .nav-active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        .report-preview {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">⚖️ Nyay AI</h1>
+                        <p class="text-sm opacity-90">Judge Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm font-semibold" id="userName">Hon. Justice Name</p>
+                        <p class="text-xs opacity-75" id="userCredential">JUDGE-XXX</p>
+                    </div>
+                    <button id="logoutBtn" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-4 sticky top-24">
+                    <h2 class="font-bold text-gray-800 mb-4">Navigation</h2>
+                    <nav class="space-y-2">
+                        <button class="nav-btn nav-active w-full text-left px-4 py-3 rounded-lg transition" data-section="evidence">
+                            📋 Review Evidence
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="custody">
+                            🔗 Chain of Custody
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="report">
+                            📄 Generate Court Report
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="alerts">
+                            🚨 Tamper Alerts
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-3">
+                <!-- Review Evidence Section -->
+                <div id="evidenceSection" class="content-section">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">📋 Review Evidence (Read-Only)</h2>
+                        
+                        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded">
+                            <p class="text-sm text-amber-800">
+                                <strong>Judicial Review Mode:</strong> You have read-only access to all evidence. You cannot modify evidence but can generate official court reports.
+                            </p>
+                        </div>
+
+                        <div id="evidenceList">
+                            <p class="text-gray-500 text-center py-8">Loading evidence...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chain of Custody Section -->
+                <div id="custodySection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🔗 Complete Chain of Custody</h2>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Evidence</label>
+                            <select id="custodyEvidenceSelect" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                <option value="">-- Select Evidence --</option>
+                            </select>
+                        </div>
+
+                        <div id="custodyChain">
+                            <p class="text-gray-500 text-center py-8">Select evidence to view custody chain.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Court Report Section -->
+                <div id="reportSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">📄 Generate Court Report</h2>
+                        
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 text-blue-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <h3 class="font-semibold text-blue-900">Exclusive Judicial Authority</h3>
+                                    <p class="text-sm text-blue-800 mt-1">Only judges can generate official court reports. Reports include complete evidence details, verification status, lab findings, and chain of custody.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="reportForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Evidence for Report *</label>
+                                <select id="reportEvidenceSelect" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+                                    <option value="">-- Select Evidence --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Case Number *</label>
+                                <input type="text" id="reportCaseNumber" required
+                                       placeholder="e.g., CR-2026-MH-5678"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Court Name *</label>
+                                <input type="text" id="reportCourtName" required
+                                       placeholder="e.g., District Court, Mumbai"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Judicial Remarks</label>
+                                <textarea id="reportRemarks" rows="4"
+                                          placeholder="Enter judicial observations and remarks..."
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
+                                📄 Generate Official Court Report
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tamper Alerts Section -->
+                <div id="alertsSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🚨 Tamper Alerts</h2>
+                        <div id="alertsList">
+                            <p class="text-gray-500 text-center py-8">Loading alerts...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Modal -->
+    <div id="reportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-800">Court Report Preview</h2>
+                <button id="closeReportModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="reportContent" class="p-8 report-preview bg-white">
+                <!-- Report content will be inserted here -->
+            </div>
+
+            <div class="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end space-x-4">
+                <button id="downloadReport" class="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition">
+                    📥 Download Report
+                </button>
+                <button id="closeReportBtn" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSession = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            currentSession = NyayAI.validateSession('JUDGE');
+            if (!currentSession) return;
+
+            document.getElementById('userName').textContent = currentSession.name;
+            document.getElementById('userCredential').textContent = currentSession.credentialId;
+
+            setupEventListeners();
+            loadEvidenceList();
+            loadTamperAlerts();
+        });
+
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchSection(this.dataset.section);
+                });
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('custodyEvidenceSelect').addEventListener('change', loadCustodyChain);
+            document.getElementById('reportForm').addEventListener('submit', handleReportGeneration);
+            document.getElementById('closeReportModal').addEventListener('click', closeReportModal);
+            document.getElementById('closeReportBtn').addEventListener('click', closeReportModal);
+            document.getElementById('downloadReport').addEventListener('click', downloadReport);
+        }
+
+        function switchSection(section) {
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-active'));
+            
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            document.querySelector(`[data-section="${section}"]`).classList.add('nav-active');
+
+            if (section === 'evidence') loadEvidenceList();
+            if (section === 'custody') loadCustodyEvidenceSelect();
+            if (section === 'report') loadReportEvidenceSelect();
+            if (section === 'alerts') loadTamperAlerts();
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                NyayAI.clearSession();
+                window.location.href = 'index.html';
+            }
+        }
+
+        function loadEvidenceList() {
+            const crimeEvidenceList = JSON.parse(localStorage.getItem('nyai_crime_evidence_list') || '[]');
+            const medicalEvidenceList = JSON.parse(localStorage.getItem('nyai_medical_evidence_list') || '[]');
+            const mlcReports = JSON.parse(localStorage.getItem('nyai_judge_mlc_reports') || '[]');
+            const biologicalList = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+            const container = document.getElementById('evidenceList');
+
+            if (crimeEvidenceList.length === 0 && medicalEvidenceList.length === 0 && biologicalList.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No evidence available.</p>';
+                return;
+            }
+
+            let html = '';
+
+            // Crime Scene Evidence from Officers
+            if (crimeEvidenceList.length > 0) {
+                html += '<h3 class="text-lg font-bold text-gray-800 mb-3 mt-4">🚔 Crime Scene Evidence (Officer)</h3>';
+                html += crimeEvidenceList.map(id => {
+                    const evidence = NyayAI.getEvidence(id);
+                    if (!evidence) return '';
+
+                    const statusColor = evidence.verificationStatus === 'VERIFIED' ? 'green' :
+                                       evidence.verificationStatus === 'TAMPERED' ? 'red' : 'yellow';
+                    
+                    const labFindings = NyayAI.getLabFindings(id);
+                    const verificationBadge = evidence.verificationStatus === 'VERIFIED' && !evidence.isTampered ?
+                        '<div class="mt-3 bg-green-50 border-2 border-green-500 rounded-lg p-3"><p class="text-sm font-bold text-green-900">🟢 Chain of Custody Verified & Certified Tamper-Free</p><p class="text-xs text-green-700 mt-1">Cryptographic hash verification passed successfully</p></div>' : '';
+                    
+                    return `
+                        <div class="border-2 ${evidence.verificationStatus === 'VERIFIED' ? 'border-green-300' : 'border-gray-200'} rounded-lg p-4 mb-4 hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="font-mono font-bold text-amber-600">${evidence.id}</span>
+                                        <span class="px-2 py-1 bg-${statusColor}-100 text-${statusColor}-800 text-xs rounded font-semibold">
+                                            ${evidence.verificationStatus}
+                                        </span>
+                                        ${evidence.isTampered ? '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded font-bold">⚠️ TAMPERED</span>' : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Category:</strong> ${evidence.category}</p>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Case:</strong> ${evidence.caseNumber}</p>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Officer:</strong> ${evidence.registeredBy} (${evidence.officerId})</p>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Registered:</strong> ${NyayAI.formatTimestamp(evidence.timestamp)}</p>
+                                    ${labFindings.length > 0 ? `<p class="text-sm text-green-600 font-semibold mt-2">✅ ${labFindings.length} Lab Finding(s) with FSL Report</p>` : ''}
+                                </div>
+                                <img src="${evidence.photo}" alt="Evidence" class="w-24 h-24 object-cover rounded ml-4">
+                            </div>
+                            
+                            ${verificationBadge}
+                            
+                            ${labFindings.length > 0 ? `
+                                <div class="mt-3 pt-3 border-t">
+                                    <p class="text-sm font-semibold text-gray-700 mb-2">Lab Findings:</p>
+                                    ${labFindings.map(f => `
+                                        <div class="bg-purple-50 border border-purple-200 p-3 rounded mb-2">
+                                            <p class="font-semibold text-purple-900">${f.type}</p>
+                                            <p class="text-sm text-gray-700 mt-1">${f.details}</p>
+                                            ${f.conclusion ? `<p class="text-sm text-gray-700 mt-1"><strong>Conclusion:</strong> ${f.conclusion}</p>` : ''}
+                                            <p class="text-xs text-gray-600 mt-2"><strong>Technician:</strong> ${f.technician} (${f.technicianId})</p>
+                                            ${f.fslReportHash ? `<p class="text-xs text-purple-700 mt-1"><strong>FSL Report Hash:</strong> <span class="font-mono">${f.fslReportHash.substring(0, 32)}...</span></p>` : ''}
+                                            ${f.fslReportFileName ? `<p class="text-xs text-purple-700"><strong>FSL Document:</strong> ${f.fslReportFileName}</p>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Medical Evidence (MLC Reports) from Hospital
+            if (mlcReports.length > 0) {
+                html += '<h3 class="text-lg font-bold text-gray-800 mb-3 mt-6">🏥 Medical Evidence (Hospital MLC Reports)</h3>';
+                html += mlcReports.map(id => {
+                    const evidence = NyayAI.getEvidence(id);
+                    if (!evidence) return '';
+
+                    return `
+                        <div class="border-2 border-green-300 bg-green-50 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="font-mono font-bold text-green-700">${evidence.id}</span>
+                                        <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded font-bold">📄 AUTHORIZED FOR COURT</span>
+                                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">${evidence.severity}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-1"><strong>MLC Number:</strong> ${evidence.mlcNumber}</p>
+                                    <p class="text-sm text-gray-700 mb-1"><strong>Patient:</strong> ${evidence.patientName}, ${evidence.patientAge}Y, ${evidence.patientGender}</p>
+                                    <p class="text-sm text-gray-700 mb-1"><strong>Injury Type:</strong> ${evidence.injuryType}</p>
+                                    <p class="text-sm text-gray-700 mb-1"><strong>Medical Officer:</strong> ${evidence.registeredBy}</p>
+                                    <p class="text-sm text-gray-700 mb-1"><strong>Registered:</strong> ${NyayAI.formatTimestamp(evidence.timestamp)}</p>
+                                    <p class="text-sm text-amber-700 font-semibold mt-2">Authorized: ${NyayAI.formatTimestamp(evidence.courtSubmissionTime)}</p>
+                                </div>
+                                <img src="${evidence.photo}" alt="Medical Evidence" class="w-24 h-24 object-cover rounded ml-4">
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-green-300">
+                                <p class="text-sm font-semibold text-gray-800 mb-2">Medical Findings:</p>
+                                <p class="text-sm text-gray-700 bg-white p-3 rounded">${evidence.medicalFindings}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Biological Samples from Hospital
+            const labReceivedSamples = biologicalList.filter(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`) || 'null');
+                return sample && sample.status && sample.status.includes('Lab');
+            });
+
+            if (labReceivedSamples.length > 0) {
+                html += '<h3 class="text-lg font-bold text-gray-800 mb-3 mt-6">🧬 Biological Samples (Hospital)</h3>';
+                html += labReceivedSamples.map(id => {
+                    const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`) || 'null');
+                    if (!sample) return '';
+
+                    return `
+                        <div class="border-2 border-blue-300 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="font-mono font-bold text-blue-700">${sample.id}</span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">BIOLOGICAL</span>
+                                        <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">${sample.type}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Related MLC:</strong> ${sample.relatedMLC}</p>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Description:</strong> ${sample.description}</p>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Medical Officer:</strong> ${sample.registeredBy}</p>
+                                    <p class="text-sm text-gray-600 mb-1"><strong>Status:</strong> ${sample.status}</p>
+                                    <p class="text-xs text-gray-500 mt-1"><strong>Hash:</strong> ${sample.photoHash.substring(0, 32)}...</p>
+                                </div>
+                                <img src="${sample.photo}" alt="Sample" class="w-24 h-24 object-cover rounded ml-4">
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            container.innerHTML = html || '<p class="text-gray-500 text-center py-8">No evidence available.</p>';
+        }
+
+        function loadCustodyEvidenceSelect() {
+            const evidenceList = JSON.parse(localStorage.getItem('nyai_evidence_list') || '[]');
+            const select = document.getElementById('custodyEvidenceSelect');
+
+            select.innerHTML = '<option value="">-- Select Evidence --</option>';
+            evidenceList.forEach(id => {
+                const evidence = NyayAI.getEvidence(id);
+                if (evidence) {
+                    select.innerHTML += `<option value="${id}">${id} - ${evidence.type}</option>`;
+                }
+            });
+        }
+
+        function loadCustodyChain(event) {
+            const evidenceId = event.target.value;
+            const container = document.getElementById('custodyChain');
+
+            if (!evidenceId) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">Select evidence to view custody chain.</p>';
+                return;
+            }
+
+            const evidence = NyayAI.getEvidence(evidenceId);
+            const custodyChain = JSON.parse(localStorage.getItem(`nyai_custody_${evidenceId}`) || '[]');
+
+            let html = `
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 class="font-bold text-gray-800 mb-2">Evidence: ${evidenceId}</h3>
+                    <p class="text-sm text-gray-600">Type: ${evidence.type}</p>
+                    <p class="text-sm text-gray-600">Registered: ${NyayAI.formatTimestamp(evidence.timestamp)}</p>
+                </div>
+            `;
+
+            // Display Police Evidence custody chain
+            if (custodyChain.length === 0) {
+                html += '<p class="text-gray-500 text-center py-4">No custody transfers recorded.</p>';
+            } else {
+                html += '<h4 class="font-semibold text-gray-800 mb-2">🚔 Police Evidence Custody Log</h4>';
+                html += '<div class="space-y-3 mb-6">';
+                custodyChain.forEach((entry, index) => {
+                    html += `
+                        <div class="border-l-4 border-amber-500 pl-4 py-2">
+                            <p class="font-semibold text-gray-800">Transfer ${index + 1}</p>
+                            <p class="text-sm text-gray-600">From: ${entry.from}</p>
+                            <p class="text-sm text-gray-600">To: ${entry.to}</p>
+                            <p class="text-xs text-gray-500">${NyayAI.formatTimestamp(entry.timestamp)}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Check for related biological samples under the same Case ID
+            const biologicalList = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+            const relatedSamples = biologicalList.filter(bioId => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${bioId}`) || 'null');
+                return sample && sample.relatedMLC && evidence.caseNumber &&
+                       (sample.relatedMLC.includes(evidence.caseNumber) || evidence.caseNumber.includes(sample.relatedMLC));
+            });
+
+            if (relatedSamples.length > 0) {
+                html += '<h4 class="font-semibold text-gray-800 mb-2 mt-4">🧬 Related Biological Samples</h4>';
+                html += '<div class="space-y-3">';
+                relatedSamples.forEach(bioId => {
+                    const sample = JSON.parse(localStorage.getItem(`nyai_biological_${bioId}`) || 'null');
+                    if (sample) {
+                        const statusColor = sample.verificationStatus === 'VERIFIED' ? 'green' :
+                                          sample.verificationStatus === 'TAMPERED' ? 'red' : 'yellow';
+                        html += `
+                            <div class="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 rounded">
+                                <p class="font-semibold text-blue-900">${sample.id}</p>
+                                <p class="text-sm text-gray-700">Type: ${sample.type}</p>
+                                <p class="text-sm text-gray-700">Status: ${sample.status}</p>
+                                ${sample.verificationStatus ? `<p class="text-sm text-${statusColor}-700">Verification: ${sample.verificationStatus}</p>` : ''}
+                                <p class="text-xs text-gray-600">Registered: ${NyayAI.formatTimestamp(sample.timestamp)}</p>
+                                ${sample.labReceiptTime ? `<p class="text-xs text-green-600">Lab Receipt: ${NyayAI.formatTimestamp(sample.labReceiptTime)}</p>` : ''}
+                            </div>
+                        `;
+                    }
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function loadReportEvidenceSelect() {
+            const evidenceList = JSON.parse(localStorage.getItem('nyai_evidence_list') || '[]');
+            const select = document.getElementById('reportEvidenceSelect');
+
+            select.innerHTML = '<option value="">-- Select Evidence --</option>';
+            evidenceList.forEach(id => {
+                const evidence = NyayAI.getEvidence(id);
+                if (evidence) {
+                    select.innerHTML += `<option value="${id}">${id} - ${evidence.type}</option>`;
+                }
+            });
+        }
+
+        function handleReportGeneration(event) {
+            event.preventDefault();
+
+            const evidenceId = document.getElementById('reportEvidenceSelect').value;
+            const caseNumber = document.getElementById('reportCaseNumber').value;
+            const courtName = document.getElementById('reportCourtName').value;
+            const remarks = document.getElementById('reportRemarks').value;
+
+            const evidence = NyayAI.getEvidence(evidenceId);
+            if (!evidence) {
+                alert('Evidence not found');
+                return;
+            }
+
+            const labFindings = NyayAI.getLabFindings(evidenceId);
+            const custodyChain = JSON.parse(localStorage.getItem(`nyai_custody_${evidenceId}`) || '[]');
+
+            // Check if it's a biological sample
+            let isBiological = false;
+            let biologicalSample = null;
+            if (evidenceId.startsWith('BIO-')) {
+                isBiological = true;
+                biologicalSample = JSON.parse(localStorage.getItem(`nyai_biological_${evidenceId}`) || 'null');
+            }
+
+            const report = generateCourtReport(evidence, labFindings, custodyChain, {
+                caseNumber,
+                courtName,
+                remarks,
+                judge: currentSession.name,
+                judgeId: currentSession.credentialId,
+                isBiological,
+                biologicalSample
+            });
+
+            displayReport(report);
+
+            // Log report generation
+            NyayAI.logAction('COURT_REPORT_GENERATED', {
+                evidenceId: evidenceId,
+                caseNumber: caseNumber,
+                courtName: courtName
+            });
+        }
+
+        function generateCourtReport(evidence, labFindings, custodyChain, metadata) {
+            const reportDate = new Date().toLocaleDateString('en-IN', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+
+            return `
+                <div class="text-center mb-8">
+                    <h1 class="text-2xl font-bold mb-2">COURT EVIDENCE REPORT</h1>
+                    <p class="text-lg">${metadata.courtName}</p>
+                    <p class="text-sm text-gray-600">Case No: ${metadata.caseNumber}</p>
+                    <p class="text-sm text-gray-600">Report Date: ${reportDate}</p>
+                </div>
+
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-3">EVIDENCE DETAILS</h2>
+                    <table class="w-full text-sm">
+                        <tr><td class="font-semibold py-1 w-1/3">Evidence ID:</td><td>${evidence.id}</td></tr>
+                        <tr><td class="font-semibold py-1">Evidence Type:</td><td>${evidence.type}</td></tr>
+                        <tr><td class="font-semibold py-1">Category:</td><td>${evidence.category || 'N/A'}</td></tr>
+                        <tr><td class="font-semibold py-1">Registration Date:</td><td>${NyayAI.formatTimestamp(evidence.timestamp)}</td></tr>
+                        <tr><td class="font-semibold py-1">Registered By:</td><td>${evidence.registeredBy || evidence.name}</td></tr>
+                        <tr><td class="font-semibold py-1">Officer ID:</td><td>${evidence.officerId || evidence.medicalOfficerId || 'N/A'}</td></tr>
+                    </table>
+                </div>
+
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-3">CRYPTOGRAPHIC VERIFICATION</h2>
+                    <table class="w-full text-sm">
+                        <tr><td class="font-semibold py-1 w-1/3">Verification Status:</td><td><span class="font-bold ${evidence.verificationStatus === 'VERIFIED' ? 'text-green-600' : evidence.verificationStatus === 'TAMPERED' ? 'text-red-600' : 'text-yellow-600'}">${evidence.verificationStatus}</span></td></tr>
+                        <tr><td class="font-semibold py-1">Evidence Hash (SHA-256):</td><td class="font-mono text-xs break-all">${evidence.photoHash}</td></tr>
+                        <tr><td class="font-semibold py-1">Tamper Status:</td><td>${evidence.isTampered ? '<span class="text-red-600 font-bold">⚠️ TAMPERED</span>' : '<span class="text-green-600 font-bold">✓ INTACT</span>'}</td></tr>
+                        ${evidence.verifiedBy ? `<tr><td class="font-semibold py-1">Verified By:</td><td>${evidence.verifiedBy}</td></tr>` : ''}
+                        ${evidence.verifiedAt ? `<tr><td class="font-semibold py-1">Verification Date:</td><td>${NyayAI.formatTimestamp(evidence.verifiedAt)}</td></tr>` : ''}
+                    </table>
+                    ${evidence.verificationStatus === 'VERIFIED' && !evidence.isTampered ? `
+                        <div class="mt-4 bg-green-100 border-2 border-green-500 rounded p-3">
+                            <p class="font-bold text-green-900">🟢 CHAIN OF CUSTODY VERIFIED & CERTIFIED TAMPER-FREE</p>
+                            <p class="text-sm text-green-800 mt-1">Cryptographic hash verification passed successfully. Evidence integrity is intact.</p>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${labFindings.length > 0 ? `
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-3">LABORATORY FINDINGS</h2>
+                        ${labFindings.map((finding, index) => `
+                            <div class="mb-4 pl-4 border-l-4 border-purple-500">
+                                <p class="font-semibold">Finding ${index + 1}: ${finding.type}</p>
+                                <p class="text-sm mt-1"><strong>Details:</strong> ${finding.details}</p>
+                                ${finding.conclusion ? `<p class="text-sm mt-1"><strong>Conclusion:</strong> ${finding.conclusion}</p>` : ''}
+                                <p class="text-xs text-gray-600 mt-1">Analyzed by: ${finding.technician} (${finding.technicianId})</p>
+                                <p class="text-xs text-gray-600">Date: ${NyayAI.formatTimestamp(finding.timestamp)}</p>
+                                ${finding.fslReportHash ? `
+                                    <div class="mt-2 bg-purple-50 p-2 rounded">
+                                        <p class="text-xs font-semibold text-purple-900">Official FSL Report Document:</p>
+                                        <p class="text-xs text-purple-700">File: ${finding.fslReportFileName}</p>
+                                        <p class="text-xs text-purple-700">Hash (SHA-256): <span class="font-mono">${finding.fslReportHash}</span></p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<div class="mb-6"><h2 class="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-3">LABORATORY FINDINGS</h2><p class="text-sm text-gray-600">No lab findings available.</p></div>'}
+
+                ${custodyChain.length > 0 ? `
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-3">CHAIN OF CUSTODY</h2>
+                        ${custodyChain.map((entry, index) => `
+                            <div class="mb-2 text-sm">
+                                <p><strong>Transfer ${index + 1}:</strong> ${entry.from} → ${entry.to}</p>
+                                <p class="text-xs text-gray-600">${NyayAI.formatTimestamp(entry.timestamp)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                ${metadata.remarks ? `
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-3">JUDICIAL REMARKS</h2>
+                        <p class="text-sm">${metadata.remarks}</p>
+                    </div>
+                ` : ''}
+
+                <div class="mt-8 pt-6 border-t-2 border-gray-300">
+                    <p class="text-sm"><strong>Report Generated By:</strong> ${metadata.judge}</p>
+                    <p class="text-sm"><strong>Judge ID:</strong> ${metadata.judgeId}</p>
+                    <p class="text-sm"><strong>Report Date:</strong> ${reportDate}</p>
+                    <p class="text-xs text-gray-600 mt-4">This report is generated by Nyay AI - Digital Forensic Chain Ledger</p>
+                    <p class="text-xs text-gray-600">All evidence is cryptographically secured with SHA-256 hashing</p>
+                </div>
+            `;
+        }
+
+        function displayReport(reportHTML) {
+            document.getElementById('reportContent').innerHTML = reportHTML;
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        function downloadReport() {
+            const reportContent = document.getElementById('reportContent').innerHTML;
+            const fullHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Court Evidence Report</title>
+                    <style>
+                        body { font-family: 'Times New Roman', serif; line-height: 1.8; padding: 40px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        td { padding: 8px; }
+                        .font-bold { font-weight: bold; }
+                        .text-green-600 { color: #059669; }
+                        .text-red-600 { color: #dc2626; }
+                        .text-yellow-600 { color: #d97706; }
+                        .border-b-2 { border-bottom: 2px solid #d1d5db; }
+                        .border-l-4 { border-left: 4px solid #8b5cf6; }
+                        .pl-4 { padding-left: 16px; }
+                        .mb-4 { margin-bottom: 16px; }
+                        .text-center { text-align: center; }
+                    </style>
+                </head>
+                <body>${reportContent}</body>
+                </html>
+            `;
+
+            const blob = new Blob([fullHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Court_Report_${new Date().getTime()}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert('✅ Court report downloaded successfully!');
+        }
+
+        function loadTamperAlerts() {
+            const alerts = NyayAI.getTamperAlerts();
+            const container = document.getElementById('alertsList');
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No tamper alerts.</p>';
+                return;
+            }
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="border-2 border-red-500 bg-red-50 rounded-lg p-4 mb-3">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-red-900 mb-1">CRITICAL ALERT: ${alert.evidenceId}</h3>
+                            <p class="text-sm text-red-800 mb-2">${alert.severity} - Cryptographic hash mismatch detected</p>
+                            <p class="text-xs text-red-700">Detected: ${NyayAI.formatTimestamp(alert.timestamp)}</p>
+                            <p class="text-xs text-red-700">Chain of custody has been compromised</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

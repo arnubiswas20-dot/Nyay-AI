@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyay AI - Medical Officer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="shared-utils.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .success-animation {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .nav-active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border-left: 4px solid #10b981;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">⚖️ Nyay AI</h1>
+                        <p class="text-sm opacity-90">Medical Officer Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm font-semibold" id="userName">Dr. Name</p>
+                        <p class="text-xs opacity-75" id="userCredential">MED-XXX</p>
+                    </div>
+                    <button id="logoutBtn" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-4 sticky top-24">
+                    <h2 class="font-bold text-gray-800 mb-4">Navigation</h2>
+                    <nav class="space-y-2">
+                        <button class="nav-btn nav-active w-full text-left px-4 py-3 rounded-lg transition" data-section="mlc">
+                            📋 Register MLC Report
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="biological">
+                            🧬 Biological Samples
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="myreports">
+                            📁 My Reports
+                        </button>
+                        <button class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition" data-section="profile">
+                            🏥 Hospital Profile
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-3">
+                <!-- MLC Report Registration Section -->
+                <div id="mlcSection" class="content-section">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Register MLC Trauma Report</h2>
+                        
+                        <!-- Info Banner -->
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <h3 class="font-semibold text-green-900">Medico-Legal Case Documentation</h3>
+                                    <p class="text-sm text-green-800 mt-1">All MLC reports are cryptographically secured with SHA-256 hashing and timestamped with geolocation data.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MLC Form -->
+                        <form id="mlcForm" class="space-y-6">
+                            <!-- Patient Information -->
+                            <div class="border-b pb-4">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4">Patient Information</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">MLC Number *</label>
+                                        <input type="text" id="mlcNumber" required 
+                                               placeholder="e.g., MLC-2026-001234"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Patient Name *</label>
+                                        <input type="text" id="patientName" required 
+                                               placeholder="Full name"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Age *</label>
+                                        <input type="number" id="patientAge" required 
+                                               placeholder="Age in years"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                                        <select id="patientGender" required 
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Injury Details -->
+                            <div class="border-b pb-4">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4">Injury/Trauma Details</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Injury Type *</label>
+                                        <select id="injuryType" required 
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                            <option value="">Select Type</option>
+                                            <option value="Blunt Trauma">Blunt Trauma</option>
+                                            <option value="Sharp Weapon">Sharp Weapon</option>
+                                            <option value="Firearm">Firearm</option>
+                                            <option value="Sexual Assault">Sexual Assault</option>
+                                            <option value="Poisoning">Poisoning</option>
+                                            <option value="Burns">Burns</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Severity *</label>
+                                        <select id="severity" required 
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                            <option value="">Select Severity</option>
+                                            <option value="Minor">Minor</option>
+                                            <option value="Moderate">Moderate</option>
+                                            <option value="Severe">Severe</option>
+                                            <option value="Critical">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Medical Findings *</label>
+                                    <textarea id="medicalFindings" required rows="4"
+                                              placeholder="Detailed medical examination findings..."
+                                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Photo Evidence -->
+                            <div class="border-b pb-4">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4">Medical Photo Evidence *</h3>
+                                <div class="flex items-center justify-center w-full">
+                                    <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPrompt">
+                                            <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                            </svg>
+                                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> injury photos</p>
+                                            <p class="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB)</p>
+                                        </div>
+                                        <img id="photoPreview" class="hidden w-full h-full object-contain rounded-lg" alt="Preview">
+                                        <input id="photoInput" type="file" accept="image/*" required class="hidden">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Hospital Location -->
+                            <div class="border-b pb-4">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4">Hospital Location</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                                        <input type="text" id="latitude" readonly 
+                                               placeholder="Auto-captured"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                                        <input type="text" id="longitude" readonly 
+                                               placeholder="Auto-captured"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                                    </div>
+                                </div>
+                                <button type="button" id="captureGPS" 
+                                        class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                                    📍 Capture Hospital GPS
+                                </button>
+                                <p id="gpsStatus" class="text-sm text-gray-500 mt-2"></p>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="flex justify-end space-x-4">
+                                <button type="button" id="resetBtn"
+                                        class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                                    Reset Form
+                                </button>
+                                <button type="submit" id="submitBtn"
+                                        class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
+                                    🔒 Register MLC Report
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Biological Samples Section -->
+                <div id="biologicalSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🧬 Biological Sample Registry</h2>
+                        
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                            <p class="text-sm text-blue-800">Register DNA samples, swabs, blood samples with photo evidence. Each sample gets a unique SHA-256 hash and QR code for tracking.</p>
+                        </div>
+
+                        <form id="biologicalForm" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Sample Type *</label>
+                                    <select id="sampleType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                        <option value="">Select Type</option>
+                                        <option value="DNA">DNA Sample</option>
+                                        <option value="Blood">Blood Sample</option>
+                                        <option value="Swab">Swab (Oral/Vaginal)</option>
+                                        <option value="Hair">Hair Sample</option>
+                                        <option value="Tissue">Tissue Sample</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Related MLC Number *</label>
+                                    <input type="text" id="relatedMLC" required placeholder="MLC-2026-XXXXXX"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Sample Description *</label>
+                                <textarea id="sampleDescription" required rows="3"
+                                          placeholder="Detailed description of the biological sample..."
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                            </div>
+
+                            <!-- Sample Photo Upload -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Sample Photo *</label>
+                                <div class="flex items-center justify-center w-full">
+                                    <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6" id="sampleUploadPrompt">
+                                            <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                            </svg>
+                                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> sample photo</p>
+                                            <p class="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB)</p>
+                                        </div>
+                                        <img id="samplePhotoPreview" class="hidden w-full h-full object-contain rounded-lg" alt="Sample Preview">
+                                        <input id="samplePhotoInput" type="file" accept="image/*" required class="hidden">
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Photo will be hashed using SHA-256 and a QR code will be generated</p>
+                            </div>
+
+                            <button type="submit" class="w-full px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
+                                🧬 Register Biological Sample
+                            </button>
+                        </form>
+
+                        <!-- Transfer Sample Module -->
+                        <div class="mt-8 pt-6 border-t">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">🔄 Transfer Sample Custody</h3>
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4 rounded">
+                                <p class="text-sm text-yellow-800">Transfer registered biological samples to Forensic Lab for analysis.</p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Sample to Transfer</label>
+                                    <select id="transferSampleSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                        <option value="">-- Select Sample --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Target</label>
+                                    <select id="transferTarget" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" disabled>
+                                        <option value="FORENSIC_LAB">Forensic Lab</option>
+                                    </select>
+                                </div>
+                                <button id="transferSampleBtn" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                                    📤 Transfer to Lab
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="samplesList" class="mt-6">
+                            <h3 class="font-bold text-gray-800 mb-3">Registered Samples</h3>
+                            <div id="samplesContainer">
+                                <p class="text-gray-500 text-center py-4">No samples registered yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Reports Section -->
+                <div id="myreportsSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-gray-800">My MLC Reports</h2>
+                            <button id="refreshList" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 rounded">
+                            <p class="text-sm text-amber-800">
+                                <strong>Court Authorization:</strong> Use the "Authorize & Submit" button to send confidential MLC reports directly to the Judge Dashboard.
+                            </p>
+                        </div>
+                        
+                        <div id="reportsList">
+                            <p class="text-gray-500 text-center py-8">No reports registered yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hospital Profile Section -->
+                <div id="profileSection" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🏥 Hospital Profile Portal</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
+                                <h3 class="font-bold text-lg text-gray-800 mb-2">Medical Officer Information</h3>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p class="text-gray-600">Name:</p>
+                                        <p class="font-semibold" id="profileName">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">Credential ID:</p>
+                                        <p class="font-semibold font-mono" id="profileCredential">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">Role:</p>
+                                        <p class="font-semibold">Medical Officer</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">Session ID:</p>
+                                        <p class="font-mono text-xs" id="profileSession">-</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="font-bold text-lg text-gray-800 mb-3">Statistics</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="text-center">
+                                        <p class="text-3xl font-bold text-green-600" id="statReports">0</p>
+                                        <p class="text-sm text-gray-600">MLC Reports</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-3xl font-bold text-blue-600" id="statSamples">0</p>
+                                        <p class="text-sm text-gray-600">Biological Samples</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-3xl font-bold text-purple-600" id="statTotal">0</p>
+                                        <p class="text-sm text-gray-600">Total Evidence</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8 success-animation">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">MLC Report Registered Successfully!</h2>
+                <p class="text-gray-600 mt-2">Medical evidence has been securely registered with cryptographic integrity.</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                    <div>
+                        <p class="text-gray-600">Evidence ID:</p>
+                        <p id="modalEvidenceId" class="font-mono font-bold text-green-600"></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Timestamp:</p>
+                        <p id="modalTimestamp" class="font-mono text-gray-800"></p>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <p class="text-gray-600 text-sm mb-2">Evidence Hash (SHA-256):</p>
+                    <p id="modalHash" class="font-mono text-xs bg-white p-2 rounded border break-all"></p>
+                </div>
+                <div class="flex justify-center">
+                    <div id="qrCodeContainer" class="bg-white p-4 rounded-lg border-2 border-green-200"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-4">
+                <button id="downloadQR" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                    📥 Download QR Code
+                </button>
+                <button id="closeModal" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let photoBase64 = null;
+        let photoHash = null;
+        let samplePhotoBase64 = null;
+        let samplePhotoHash = null;
+        let currentLocation = null;
+        let currentSession = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            currentSession = NyayAI.validateSession('MEDICAL_OFFICER');
+            if (!currentSession) return;
+
+            // Display user info
+            document.getElementById('userName').textContent = currentSession.name;
+            document.getElementById('userCredential').textContent = currentSession.credentialId;
+
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Auto-capture GPS
+            attemptAutoGPS();
+            
+            // Load reports
+            loadReportsList();
+            loadProfile();
+            loadBiologicalSamples();
+        });
+
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchSection(this.dataset.section);
+                });
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // Form handlers
+            document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+            document.getElementById('samplePhotoInput').addEventListener('change', handleSamplePhotoUpload);
+            document.getElementById('captureGPS').addEventListener('click', captureGPS);
+            document.getElementById('mlcForm').addEventListener('submit', handleMLCSubmit);
+            document.getElementById('biologicalForm').addEventListener('submit', handleBiologicalSubmit);
+            document.getElementById('transferSampleBtn').addEventListener('click', handleSampleTransfer);
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('downloadQR').addEventListener('click', downloadQRCode);
+            document.getElementById('refreshList').addEventListener('click', loadReportsList);
+        }
+
+        function switchSection(section) {
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-active'));
+            
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            document.querySelector(`[data-section="${section}"]`).classList.add('nav-active');
+
+            if (section === 'myreports') loadReportsList();
+            if (section === 'profile') loadProfile();
+            if (section === 'biological') loadBiologicalSamples();
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                NyayAI.clearSession();
+                window.location.href = 'index.html';
+            }
+        }
+
+        function attemptAutoGPS() {
+            if (navigator.geolocation) {
+                document.getElementById('gpsStatus').textContent = '📍 Attempting to auto-capture GPS...';
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                        document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                        document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                        document.getElementById('gpsStatus').textContent = '✅ GPS captured automatically';
+                        document.getElementById('gpsStatus').className = 'text-sm text-green-600 mt-2';
+                    },
+                    (error) => {
+                        document.getElementById('gpsStatus').textContent = '⚠️ Auto-capture failed. Click button to retry.';
+                        document.getElementById('gpsStatus').className = 'text-sm text-orange-600 mt-2';
+                    }
+                );
+            }
+        }
+
+        function captureGPS() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
+
+            document.getElementById('gpsStatus').textContent = '📍 Capturing GPS location...';
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    currentLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                    document.getElementById('gpsStatus').textContent = '✅ GPS location captured successfully';
+                    document.getElementById('gpsStatus').className = 'text-sm text-green-600 mt-2';
+                },
+                (error) => {
+                    document.getElementById('gpsStatus').textContent = '❌ Failed to capture GPS: ' + error.message;
+                    document.getElementById('gpsStatus').className = 'text-sm text-red-600 mt-2';
+                }
+            );
+        }
+
+        async function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                photoBase64 = e.target.result;
+                
+                const preview = document.getElementById('photoPreview');
+                const prompt = document.getElementById('uploadPrompt');
+                preview.src = photoBase64;
+                preview.classList.remove('hidden');
+                prompt.classList.add('hidden');
+
+                photoHash = await NyayAI.generateSHA256(photoBase64);
+                console.log('Photo hash generated:', photoHash);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleSamplePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                samplePhotoBase64 = e.target.result;
+                
+                const preview = document.getElementById('samplePhotoPreview');
+                const prompt = document.getElementById('sampleUploadPrompt');
+                preview.src = samplePhotoBase64;
+                preview.classList.remove('hidden');
+                prompt.classList.add('hidden');
+
+                samplePhotoHash = await NyayAI.generateSHA256(samplePhotoBase64);
+                console.log('Sample photo hash generated:', samplePhotoHash);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleMLCSubmit(event) {
+            event.preventDefault();
+
+            if (!photoBase64) {
+                alert('Please upload a photo');
+                return;
+            }
+
+            if (!currentLocation) {
+                alert('Please capture GPS location');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Processing...';
+
+            try {
+                const evidenceData = {
+                    id: NyayAI.generateEvidenceId('MEDICAL'),
+                    type: 'MEDICAL_EVIDENCE',
+                    mlcNumber: document.getElementById('mlcNumber').value,
+                    patientName: document.getElementById('patientName').value,
+                    patientAge: document.getElementById('patientAge').value,
+                    patientGender: document.getElementById('patientGender').value,
+                    injuryType: document.getElementById('injuryType').value,
+                    severity: document.getElementById('severity').value,
+                    medicalFindings: document.getElementById('medicalFindings').value,
+                    photo: photoBase64,
+                    photoHash: photoHash,
+                    location: currentLocation,
+                    timestamp: new Date().toISOString(),
+                    registeredBy: currentSession.name,
+                    medicalOfficerId: currentSession.credentialId,
+                    status: 'Registered',
+                    isTampered: false,
+                    verificationStatus: 'PENDING'
+                };
+
+                const evidenceString = JSON.stringify({
+                    photo: photoHash,
+                    location: currentLocation,
+                    timestamp: evidenceData.timestamp,
+                    mlcNumber: evidenceData.mlcNumber,
+                    patientName: evidenceData.patientName
+                });
+                evidenceData.evidenceHash = await NyayAI.generateSHA256(evidenceString);
+                evidenceData.qrCodeDeepLink = `https://nyay-ai.app/verify?id=${evidenceData.id}&hash=${evidenceData.evidenceHash.substring(0, 16)}&type=medical`;
+
+                NyayAI.saveEvidence(evidenceData);
+                showSuccessModal(evidenceData);
+                resetForm();
+                loadReportsList();
+
+            } catch (error) {
+                alert('Error registering MLC report: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔒 Register MLC Report';
+            }
+        }
+
+        async function handleBiologicalSubmit(event) {
+            event.preventDefault();
+
+            if (!samplePhotoBase64) {
+                alert('Please upload sample photo');
+                return;
+            }
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Processing...';
+
+            try {
+                const sampleId = `BIO-${new Date().getFullYear()}-${Math.floor(Math.random() * 999999).toString().padStart(6, '0')}`;
+                
+                const sampleData = {
+                    id: sampleId,
+                    type: document.getElementById('sampleType').value,
+                    relatedMLC: document.getElementById('relatedMLC').value,
+                    description: document.getElementById('sampleDescription').value,
+                    photo: samplePhotoBase64,
+                    photoHash: samplePhotoHash,
+                    timestamp: new Date().toISOString(),
+                    geolocation: currentLocation || { latitude: 'N/A', longitude: 'N/A' },
+                    registeredBy: currentSession.name,
+                    officerId: currentSession.credentialId,
+                    status: 'Registered',
+                    transferredToLab: false
+                };
+
+                // Generate evidence hash from critical data
+                const evidenceString = JSON.stringify({
+                    photo: samplePhotoHash,
+                    type: sampleData.type,
+                    relatedMLC: sampleData.relatedMLC,
+                    timestamp: sampleData.timestamp
+                });
+                sampleData.evidenceHash = await NyayAI.generateSHA256(evidenceString);
+
+                // Generate QR Code deep-link
+                sampleData.qrCodeDeepLink = `https://nyay-ai.app/verify?id=${sampleId}&hash=${sampleData.evidenceHash.substring(0, 16)}&type=biological`;
+
+                // Save to localStorage
+                localStorage.setItem(`nyai_biological_${sampleId}`, JSON.stringify(sampleData));
+                
+                const samples = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+                samples.push(sampleId);
+                localStorage.setItem('nyai_biological_samples_list', JSON.stringify(samples));
+
+                NyayAI.logAction('BIOLOGICAL_SAMPLE_REGISTRATION', {
+                    sampleId: sampleId,
+                    type: sampleData.type,
+                    relatedMLC: sampleData.relatedMLC
+                });
+
+                // Show success modal with QR code
+                showBiologicalSuccessModal(sampleData);
+
+                // Reset form
+                document.getElementById('biologicalForm').reset();
+                samplePhotoBase64 = null;
+                samplePhotoHash = null;
+                document.getElementById('samplePhotoPreview').classList.add('hidden');
+                document.getElementById('sampleUploadPrompt').classList.remove('hidden');
+                
+                loadBiologicalSamples();
+                loadTransferSampleList();
+
+            } catch (error) {
+                alert('Error registering biological sample: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🧬 Register Biological Sample';
+            }
+        }
+
+        function showBiologicalSuccessModal(sampleData) {
+            // Reuse the existing success modal
+            document.getElementById('modalEvidenceId').textContent = sampleData.id;
+            document.getElementById('modalTimestamp').textContent = new Date(sampleData.timestamp).toLocaleString();
+            document.getElementById('modalHash').textContent = sampleData.evidenceHash;
+
+            // Update modal title for biological sample
+            const modalTitle = document.querySelector('#successModal h2');
+            modalTitle.textContent = '🧬 Biological Sample Registered Successfully!';
+            const modalDesc = document.querySelector('#successModal p');
+            modalDesc.textContent = 'Sample has been securely registered with SHA-256 hash and QR code for chain of custody tracking.';
+
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: sampleData.qrCodeDeepLink,
+                width: 200,
+                height: 200
+            });
+
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function handleSampleTransfer() {
+            const sampleId = document.getElementById('transferSampleSelect').value;
+            if (!sampleId) {
+                alert('Please select a sample to transfer');
+                return;
+            }
+
+            const sample = JSON.parse(localStorage.getItem(`nyai_biological_${sampleId}`));
+            if (!sample) {
+                alert('Sample not found');
+                return;
+            }
+
+            if (sample.transferredToLab) {
+                alert('This sample has already been transferred to the lab');
+                return;
+            }
+
+            // Update sample status
+            sample.status = 'In Transit to Lab';
+            sample.transferredToLab = true;
+            sample.transferTimestamp = new Date().toISOString();
+            sample.transferredBy = currentSession.name;
+            localStorage.setItem(`nyai_biological_${sampleId}`, JSON.stringify(sample));
+
+            // Add to lab incoming queue
+            const labQueue = JSON.parse(localStorage.getItem('nyai_lab_incoming_queue') || '[]');
+            labQueue.push({
+                id: sampleId,
+                type: 'BIOLOGICAL_SAMPLE',
+                from: 'MEDICAL_OFFICER',
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('nyai_lab_incoming_queue', JSON.stringify(labQueue));
+
+            NyayAI.logAction('SAMPLE_TRANSFER_TO_LAB', {
+                sampleId: sampleId,
+                from: currentSession.credentialId,
+                to: 'FORENSIC_LAB'
+            });
+
+            alert('✅ Sample transferred to Forensic Lab successfully!');
+            loadBiologicalSamples();
+            loadTransferSampleList();
+        }
+
+        function loadTransferSampleList() {
+            const samplesList = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+            const select = document.getElementById('transferSampleSelect');
+            
+            select.innerHTML = '<option value="">-- Select Sample --</option>';
+            
+            samplesList.forEach(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`));
+                if (sample && sample.officerId === currentSession.credentialId && !sample.transferredToLab) {
+                    select.innerHTML += `<option value="${id}">${id} - ${sample.type}</option>`;
+                }
+            });
+        }
+
+        function loadBiologicalSamples() {
+            const samplesList = JSON.parse(localStorage.getItem('nyai_biological_samples_list') || '[]');
+            const container = document.getElementById('samplesContainer');
+
+            const mySamples = samplesList.filter(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`));
+                return sample && sample.officerId === currentSession.credentialId;
+            });
+
+            if (mySamples.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No samples registered yet.</p>';
+                return;
+            }
+
+            container.innerHTML = mySamples.map(id => {
+                const sample = JSON.parse(localStorage.getItem(`nyai_biological_${id}`));
+                const statusColor = sample.transferredToLab ? 'blue' : 'green';
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="font-mono font-bold text-blue-600">${sample.id}</span>
+                                    <span class="px-2 py-1 bg-${statusColor}-100 text-${statusColor}-800 text-xs rounded">${sample.status}</span>
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">${sample.type}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2"><strong>Related MLC:</strong> ${sample.relatedMLC}</p>
+                                <p class="text-sm text-gray-600"><strong>Description:</strong> ${sample.description}</p>
+                                <p class="text-xs text-gray-500 mt-1"><strong>Hash:</strong> ${sample.photoHash.substring(0, 32)}...</p>
+                                <p class="text-xs text-gray-500">${NyayAI.formatTimestamp(sample.timestamp)}</p>
+                                ${sample.transferredToLab ? `<p class="text-xs text-blue-600 mt-1">✅ Transferred to Lab: ${NyayAI.formatTimestamp(sample.transferTimestamp)}</p>` : ''}
+                            </div>
+                            <img src="${sample.photo}" alt="Sample" class="w-20 h-20 object-cover rounded ml-4">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            loadTransferSampleList();
+        }
+
+        function showSuccessModal(evidence) {
+            document.getElementById('modalEvidenceId').textContent = evidence.id;
+            document.getElementById('modalTimestamp').textContent = new Date(evidence.timestamp).toLocaleString();
+            document.getElementById('modalHash').textContent = evidence.evidenceHash;
+
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: evidence.qrCodeDeepLink,
+                width: 200,
+                height: 200
+            });
+
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        function downloadQRCode() {
+            const qrCanvas = document.querySelector('#qrCodeContainer canvas');
+            NyayAI.downloadQRCode(qrCanvas, document.getElementById('modalEvidenceId').textContent);
+        }
+
+        function resetForm() {
+            document.getElementById('mlcForm').reset();
+            photoBase64 = null;
+            photoHash = null;
+            document.getElementById('photoPreview').classList.add('hidden');
+            document.getElementById('uploadPrompt').classList.remove('hidden');
+        }
+
+        function loadReportsList() {
+            const medicalList = JSON.parse(localStorage.getItem('nyai_medical_evidence_list') || '[]');
+            const container = document.getElementById('reportsList');
+
+            const myReports = medicalList.filter(id => {
+                const evidence = NyayAI.getEvidence(id);
+                return evidence && evidence.medicalOfficerId === currentSession.credentialId;
+            });
+
+            if (myReports.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No reports registered yet.</p>';
+                return;
+            }
+
+            container.innerHTML = myReports.map(id => {
+                const evidence = NyayAI.getEvidence(id);
+                const submittedToCourt = evidence.submittedToCourt || false;
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-3 hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="font-mono font-bold text-green-600">${evidence.id}</span>
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">${evidence.status}</span>
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">${evidence.severity}</span>
+                                    ${submittedToCourt ? '<span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded font-bold">📄 Submitted to Court</span>' : ''}
+                                </div>
+                                <p class="text-sm text-gray-600 mb-1"><strong>MLC:</strong> ${evidence.mlcNumber}</p>
+                                <p class="text-sm text-gray-600 mb-1"><strong>Patient:</strong> ${evidence.patientName}, ${evidence.patientAge}Y, ${evidence.patientGender}</p>
+                                <p class="text-sm text-gray-600 mb-1"><strong>Injury:</strong> ${evidence.injuryType}</p>
+                                <p class="text-xs text-gray-500"><strong>Registered:</strong> ${new Date(evidence.timestamp).toLocaleString()}</p>
+                                ${submittedToCourt ? `<p class="text-xs text-amber-600 mt-1">Authorized: ${NyayAI.formatTimestamp(evidence.courtSubmissionTime)}</p>` : ''}
+                            </div>
+                            <img src="${evidence.photo}" alt="Evidence" class="w-20 h-20 object-cover rounded ml-4">
+                        </div>
+                        ${!submittedToCourt ? `
+                            <button onclick="authorizeMLCReport('${id}')" class="mt-3 w-full px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-semibold">
+                                📄 Authorize & Submit Report to Court
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function authorizeMLCReport(evidenceId) {
+            if (!confirm('Authorize and submit this confidential MLC report to the Judge Dashboard?')) {
+                return;
+            }
+
+            const evidence = NyayAI.getEvidence(evidenceId);
+            if (!evidence) {
+                alert('Evidence not found');
+                return;
+            }
+
+            // Update evidence with court submission flag
+            NyayAI.updateEvidence(evidenceId, {
+                submittedToCourt: true,
+                courtSubmissionTime: new Date().toISOString(),
+                authorizedBy: currentSession.name
+            });
+
+            // Add to judge's queue
+            const judgeQueue = JSON.parse(localStorage.getItem('nyai_judge_mlc_reports') || '[]');
+            judgeQueue.push(evidenceId);
+            localStorage.setItem('nyai_judge_mlc_reports', JSON.stringify(judgeQueue));
+
+            NyayAI.logAction('MLC_REPORT_AUTHORIZED_TO_COURT', {
+                evidenceId: evidenceId,
+                mlcNumber: evidence.mlcNumber,
+                authorizedBy: currentSession.name
+            });
+
+            alert('✅ MLC Report authorized and submitted to Court successfully!');
+            loadReportsList();
+        }
+
+        function loadProfile() {
+            document.getElementById('profileName').textContent = currentSession.name;
+            document.getElementById('profileCredential').textContent = currentSession.credentialId;
+            document.getElementById('profileSession').textContent = currentSession.sessionId;
+
+            const medicalList = JSON.parse(localStorage.getItem('nyai_medical_evidence_list') || '[]');
+            const samples = JSON.parse(localStorage.getItem('nyai_biological_samples') || '[]');
+
+            const myReports = medicalList.filter(id => {
+                const evidence = NyayAI.getEvidence(id);
+                return evidence && evidence.medicalOfficerId === currentSession.credentialId;
+            }).length;
+
+            const mySamples = samples.filter(s => s.officerId === currentSession.credentialId).length;
+
+            document.getElementById('statReports').textContent = myReports;
+            document.getElementById('statSamples').textContent = mySamples;
+            document.getElementById('statTotal').textContent = myReports + mySamples;
+        }
+    </script>
+</body>
+</html>

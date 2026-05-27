@@ -3,1956 +3,512 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nyay AI - Evidence Registration</title>
+    <title>Nyay AI - Secure Workspace Gateway</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        .success-animation {
-            animation: slideIn 0.5s ease-out;
+        .auth-card {
+            animation: fadeInUp 0.6s ease-out;
         }
-        @keyframes slideIn {
+        @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(-20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        /* Tamper Detection Animations */
-        .tampered-flash {
-            animation: flashRed 1s infinite;
+        .role-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
-        @keyframes flashRed {
-            0%, 100% {
-                background-color: #fee2e2;
-                border-color: #dc2626;
-            }
-            50% {
-                background-color: #fca5a5;
-                border-color: #991b1b;
-            }
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .role-card.selected {
+            border: 3px solid #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         }
         .shield-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        .shield-safe {
-            background-color: #dcfce7;
-            color: #16a34a;
-        }
-        .shield-tampered {
-            background-color: #fee2e2;
-            color: #dc2626;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-        }
-        .immutable-locked {
-            opacity: 0.5;
-            cursor: not-allowed !important;
-            pointer-events: none;
-        }
-        /* Court Report Styles */
-        .report-watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 120px;
-            font-weight: bold;
-            color: rgba(102, 126, 234, 0.05);
-            pointer-events: none;
-            z-index: 0;
-            white-space: nowrap;
-        }
-        /* Audit Trail Watermark */
-        .audit-trail-watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 180px;
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .audit-trail-container {
-            position: relative;
-        }
-        .report-content {
-            position: relative;
-            z-index: 1;
-        }
-        .report-header {
-            border-bottom: 4px solid #667eea;
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-        }
-        .report-section {
-            page-break-inside: avoid;
-            margin-bottom: 2rem;
-        }
-        .report-seal {
             width: 80px;
             height: 80px;
-            border: 3px solid #667eea;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            .report-watermark {
-                color: rgba(102, 126, 234, 0.08);
-            }
+            margin: 0 auto 1rem;
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <header class="gradient-bg text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3308/3308395.png" alt="Nyay AI Logo" style="height: 40px; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));">
-                    <div>
-                        <h1 class="text-3xl font-bold">Nyay AI</h1>
-                        <p class="text-sm opacity-90">Digital Forensic Chain Ledger</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-lg font-semibold">Immutable Justice. Verifiable Truth.</p>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Role Switcher -->
-    <div class="bg-white border-b shadow-sm sticky top-0 z-40">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm font-semibold text-gray-700">Active Role:</span>
-                    <select id="roleSelector" class="px-4 py-2 border-2 border-purple-500 rounded-lg font-semibold text-purple-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <option value="officer">👮 Officer</option>
-                        <option value="lab_tech">🔬 Lab Technician</option>
-                        <option value="judge">⚖️ Judge</option>
-                        <option value="victim">👤 Victim</option>
-                    </select>
-                    <span id="roleDescription" class="text-xs text-gray-600 italic"></span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs text-gray-600">User ID:</span>
-                    <input type="text" id="userId" placeholder="Enter your ID" class="px-3 py-1 border border-gray-300 rounded text-sm" value="OFF-12345">
-                    <span class="text-xs text-gray-600">Case ID (Victim only):</span>
-                    <input type="text" id="victimCaseId" placeholder="CR-2026-XXXX" class="px-3 py-1 border border-gray-300 rounded text-sm" disabled>
-                </div>
-            </div>
-        </div>
+    <!-- Watermark -->
+    <div class="fixed inset-0 flex items-center justify-center pointer-events-none opacity-5 z-0">
+        <div class="text-9xl font-bold text-purple-600 transform -rotate-45">NYAY AI</div>
     </div>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Info Banner -->
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
-            <div class="flex items-start">
-                <svg class="w-6 h-6 text-blue-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                </svg>
-                <div>
-                    <h3 class="font-semibold text-blue-900">Secure Evidence Registration</h3>
-                    <p class="text-sm text-blue-800 mt-1">All evidence is cryptographically hashed (SHA-256) and assigned a unique QR code for tamper-proof tracking.</p>
+    <!-- Main Container -->
+    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-6xl">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full mb-4 shadow-2xl">
+                    <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
                 </div>
+                <h1 class="text-5xl font-bold text-gray-800 mb-2">⚖️ Nyay AI</h1>
+                <p class="text-xl text-gray-600 mb-1">Digital Forensic Chain Ledger</p>
+                <p class="text-sm text-gray-500">Secure Workspace Gateway - Version 2.0</p>
             </div>
-        </div>
 
-        <!-- Registration Form -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Register New Evidence</h2>
-            
-            <form id="evidenceForm" class="space-y-6">
-                <!-- Case Information -->
-                <div class="border-b pb-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Case Information</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Authentication Card -->
+            <div class="bg-white rounded-2xl shadow-2xl p-8 auth-card">
+                <!-- Security Notice -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-blue-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Case Number *</label>
-                            <input type="text" id="caseNumber" required 
-                                   placeholder="e.g., CR-2026-MH-5678"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Evidence Category *</label>
-                            <select id="category" required 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                                <option value="">Select Category</option>
-                                <option value="Physical">Physical Evidence</option>
-                                <option value="Digital">Digital Evidence</option>
-                                <option value="Documentary">Documentary Evidence</option>
-                                <option value="Biological">Biological Evidence</option>
-                            </select>
+                            <h3 class="font-semibold text-blue-900">Secure Authentication Required</h3>
+                            <p class="text-sm text-blue-800 mt-1">Select your role and enter valid credentials to access your workspace. All actions are logged and audited.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Evidence Details -->
-                <div class="border-b pb-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Evidence Details</h3>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
-                        <textarea id="description" required rows="3"
-                                  placeholder="Detailed description of the evidence..."
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
-                    </div>
-                </div>
-
-                <!-- Photo Upload -->
-                <div class="border-b pb-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Photo Evidence *</h3>
-                    <div class="flex items-center justify-center w-full">
-                        <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPrompt">
-                                <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                <!-- Role Selection -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Select Your Role</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Investigating Officer -->
+                        <div class="role-card bg-white border-2 border-gray-200 rounded-xl p-6 text-center" data-role="INVESTIGATING_OFFICER">
+                            <div class="shield-icon">
+                                <svg class="w-full h-full text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                 </svg>
-                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p class="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB)</p>
                             </div>
-                            <img id="photoPreview" class="hidden w-full h-full object-contain rounded-lg" alt="Preview">
-                            <input id="photoInput" type="file" accept="image/*" required class="hidden">
-                        </label>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2">Photo will be hashed using SHA-256 for integrity verification</p>
-                </div>
-
-                <!-- Location Information -->
-                <div class="border-b pb-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Location Information</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
-                            <input type="text" id="latitude" readonly 
-                                   placeholder="Auto-captured"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Investigating Officer</h3>
+                            <p class="text-sm text-gray-600">Crime Scene Evidence Registration</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
-                            <input type="text" id="longitude" readonly 
-                                   placeholder="Auto-captured"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                        </div>
-                    </div>
-                    <button type="button" id="captureGPS" 
-                            class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-                        📍 Capture GPS Location
-                    </button>
-                    <p id="gpsStatus" class="text-sm text-gray-500 mt-2"></p>
-                </div>
 
-                <!-- Officer Information -->
-                <div class="border-b pb-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Officer Information</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Officer Name *</label>
-                            <input type="text" id="officerName" required 
-                                   placeholder="Full Name"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Officer ID *</label>
-                            <input type="text" id="officerId" required 
-                                   placeholder="e.g., OFF-12345"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="resetBtn"
-                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                        Reset Form
-                    </button>
-                    <button type="submit" id="submitBtn"
-                            class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
-                        🔒 Register Evidence
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Success Modal (Hidden by default) -->
-        <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8 success-animation">
-                <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800">Evidence Registered Successfully!</h2>
-                    <p class="text-gray-600 mt-2">Your evidence has been securely registered with cryptographic integrity.</p>
-                </div>
-
-                <div class="bg-gray-50 rounded-lg p-6 mb-6">
-                    <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                        <div>
-                            <p class="text-gray-600">Evidence ID:</p>
-                            <p id="modalEvidenceId" class="font-mono font-bold text-purple-600"></p>
-                        </div>
-                        <div>
-                            <p class="text-gray-600">Timestamp:</p>
-                            <p id="modalTimestamp" class="font-mono text-gray-800"></p>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <p class="text-gray-600 text-sm mb-2">Evidence Hash (SHA-256):</p>
-                        <p id="modalHash" class="font-mono text-xs bg-white p-2 rounded border break-all"></p>
-                    </div>
-                    <div class="flex justify-center">
-                        <div id="qrCodeContainer" class="bg-white p-4 rounded-lg border-2 border-purple-200"></div>
-                    </div>
-                    <p class="text-center text-xs text-gray-500 mt-2">Scan QR code for quick verification</p>
-                </div>
-
-                <div class="flex justify-center space-x-4">
-                    <button id="downloadQR" class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                        📥 Download QR Code
-                    </button>
-                    <button id="closeModal" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Transfer Modal (Hidden by default) -->
-        <div id="transferModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8 success-animation">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Transfer Evidence</h2>
-                    <button id="closeTransferModal" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
-                    <p class="text-sm text-blue-800">
-                        <strong>Evidence ID:</strong> <span id="transferEvidenceId" class="font-mono"></span>
-                    </p>
-                    <p class="text-sm text-blue-800 mt-1">
-                        <strong>Current Holder:</strong> <span id="transferCurrentHolder"></span>
-                    </p>
-                </div>
-
-                <form id="transferForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Receiver ID *</label>
-                        <input type="text" id="receiverId" required
-                               placeholder="e.g., LAB-001, DOC-456, CRT-789"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Receiver Name *</label>
-                        <input type="text" id="receiverName" required
-                               placeholder="Full name of receiver"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Destination *</label>
-                        <select id="destination" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <option value="">Select Destination</option>
-                            <option value="Lab">Forensic Lab</option>
-                            <option value="Doctor">Medical Examiner</option>
-                            <option value="Court">Court</option>
-                            <option value="Storage">Evidence Storage</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Condition *</label>
-                        <select id="condition" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <option value="">Select Condition</option>
-                            <option value="Sealed - Intact">Sealed - Intact</option>
-                            <option value="Sealed - Minor Damage">Sealed - Minor Damage</option>
-                            <option value="Unsealed - Examined">Unsealed - Examined</option>
-                            <option value="Damaged">Damaged</option>
-                            <option value="Good">Good</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Notes</label>
-                        <textarea id="transferNotes" rows="3"
-                                  placeholder="Additional notes about the transfer..."
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
-                    </div>
-
-                    <div class="flex justify-end space-x-4 pt-4">
-                        <button type="button" id="cancelTransfer"
-                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
-                            🔄 Complete Transfer
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Lab Findings Modal (Lab Technician Only) -->
-        <div id="labFindingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8 success-animation">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">🔬 Add Lab Findings</h2>
-                    <button id="closeLabFindingsModal" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
-                    <p class="text-sm text-blue-800">
-                        <strong>Evidence ID:</strong> <span id="labEvidenceId" class="font-mono"></span>
-                    </p>
-                </div>
-
-                <form id="labFindingsForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Test Type *</label>
-                        <select id="testType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <option value="">Select Test Type</option>
-                            <option value="DNA Analysis">DNA Analysis</option>
-                            <option value="Fingerprint Analysis">Fingerprint Analysis</option>
-                            <option value="Toxicology">Toxicology</option>
-                            <option value="Ballistics">Ballistics</option>
-                            <option value="Digital Forensics">Digital Forensics</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Findings *</label>
-                        <textarea id="labFindings" required rows="4"
-                                  placeholder="Detailed lab findings and analysis results..."
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Result Status *</label>
-                        <select id="resultStatus" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <option value="">Select Status</option>
-                            <option value="Positive Match">Positive Match</option>
-                            <option value="Negative Match">Negative Match</option>
-                            <option value="Inconclusive">Inconclusive</option>
-                            <option value="Pending Further Analysis">Pending Further Analysis</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Technician Notes</label>
-                        <textarea id="technicianNotes" rows="2"
-                                  placeholder="Additional notes or observations..."
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
-                    </div>
-
-                    <div class="flex justify-end space-x-4 pt-4">
-                        <button type="button" id="cancelLabFindings"
-                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold">
-                            🔬 Submit Findings
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- View Registered Evidence -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Registered Evidence</h2>
-                <button id="refreshList" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                    🔄 Refresh
-                </button>
-            </div>
-            <div id="evidenceList" class="space-y-3">
-                <p class="text-gray-500 text-center py-8">No evidence registered yet. Register your first evidence above.</p>
-            </div>
-        </div>
-
-        <!-- Live Tracking Section -->
-        <div id="trackingSection" class="hidden bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">🔍 Live Tracking - Chain of Custody</h2>
-            
-            <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-6 rounded">
-                <p class="text-sm text-purple-800">
-                    <strong>Tracking Evidence:</strong> <span id="trackingEvidenceId" class="font-mono"></span>
-                </p>
-                <p class="text-sm text-purple-800 mt-1">
-                    <strong>Case Number:</strong> <span id="trackingCaseNumber"></span>
-                </p>
-            </div>
-
-            <div id="custodyTimeline" class="space-y-4">
-                <!-- Timeline will be populated here -->
-            </div>
-
-            <div class="mt-6 text-center">
-                <button id="closeTracking" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                    Close Tracking
-                </button>
-        <!-- Court Report Modal -->
-        <div id="courtReportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full my-8 success-animation">
-                <div class="report-watermark">NYAY AI CERTIFIED</div>
-                
-                <div class="report-content p-8">
-                    <!-- Report Header -->
-                    <div class="report-header flex justify-between items-start no-print">
-                        <div class="flex items-center space-x-4">
-                            <div class="report-seal">⚖️</div>
-                            <div>
-                                <h1 class="text-3xl font-bold text-gray-900">COURT EVIDENCE REPORT</h1>
-                                <p class="text-sm text-gray-600 mt-1">Digital Forensic Chain Ledger - Official Document</p>
+                        <!-- Medical Officer -->
+                        <div class="role-card bg-white border-2 border-gray-200 rounded-xl p-6 text-center" data-role="MEDICAL_OFFICER">
+                            <div class="shield-icon">
+                                <svg class="w-full h-full text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
                             </div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Medical Officer</h3>
+                            <p class="text-sm text-gray-600">MLC Trauma Report Registration</p>
                         </div>
-                        <button id="closeReportModal" class="text-gray-500 hover:text-gray-700">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
 
-                    <!-- Print Header (only visible when printing) -->
-                    <div class="hidden print:block report-header mb-6">
-                        <div class="flex items-center space-x-4 mb-4">
-                            <div class="report-seal">⚖️</div>
-                            <div>
-                                <h1 class="text-3xl font-bold text-gray-900">COURT EVIDENCE REPORT</h1>
-                                <p class="text-sm text-gray-600 mt-1">Digital Forensic Chain Ledger - Official Document</p>
+                        <!-- Lab Technician -->
+                        <div class="role-card bg-white border-2 border-gray-200 rounded-xl p-6 text-center" data-role="LAB_TECHNICIAN">
+                            <div class="shield-icon">
+                                <svg class="w-full h-full text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                </svg>
                             </div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Lab Technician</h3>
+                            <p class="text-sm text-gray-600">Evidence Verification & Analysis</p>
                         </div>
-                    </div>
 
-                    <!-- Report Metadata -->
-                    <div class="report-section bg-gray-50 p-6 rounded-lg">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Report Information</h2>
-                        <div class="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p class="text-gray-600">Report Generated:</p>
-                                <p id="reportGeneratedTime" class="font-semibold text-gray-900"></p>
+                        <!-- Judge -->
+                        <div class="role-card bg-white border-2 border-gray-200 rounded-xl p-6 text-center" data-role="JUDGE">
+                            <div class="shield-icon">
+                                <svg class="w-full h-full text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+                                </svg>
                             </div>
-                            <div>
-                                <p class="text-gray-600">Generated By:</p>
-                                <p id="reportGeneratedBy" class="font-semibold text-gray-900"></p>
-                            </div>
-                            <div>
-                                <p class="text-gray-600">Evidence ID:</p>
-                                <p id="reportEvidenceId" class="font-mono font-bold text-purple-600"></p>
-                            </div>
-                            <div>
-                                <p class="text-gray-600">Case Number:</p>
-                                <p id="reportCaseNumber" class="font-semibold text-gray-900"></p>
-                            </div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Judge</h3>
+                            <p class="text-sm text-gray-600">Case Review & Report Generation</p>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Evidence Details -->
-                    <div class="report-section">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">🔍 Evidence Details</h2>
-                        <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
-                            <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                <!-- Credential Input Form -->
+                <form id="authForm" class="space-y-6">
+                    <div id="credentialSection" class="hidden">
+                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-6 mb-6">
+                            <div class="flex items-center mb-4">
+                                <div id="selectedRoleIcon" class="w-12 h-12 mr-4"></div>
                                 <div>
-                                    <p class="text-gray-600">Category:</p>
-                                    <p id="reportCategory" class="font-semibold text-gray-900"></p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Current Status:</p>
-                                    <p id="reportStatus" class="font-semibold text-gray-900"></p>
+                                    <h3 id="selectedRoleName" class="text-xl font-bold text-gray-800"></h3>
+                                    <p id="selectedRoleDesc" class="text-sm text-gray-600"></p>
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <p class="text-gray-600 mb-2">Description:</p>
-                                <p id="reportDescription" class="text-gray-900"></p>
-                            </div>
+                        </div>
+
+                        <div class="space-y-4">
                             <div>
-                                <p class="text-gray-600 mb-2">Registered By:</p>
-                                <p id="reportRegisteredBy" class="text-gray-900"></p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span id="credentialLabel">Credential ID</span> *
+                                </label>
+                                <input type="text" id="credentialInput" required 
+                                       placeholder="Enter your credential ID"
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg font-mono">
+                                <p class="text-xs text-gray-500 mt-2" id="credentialHint">Format: XXX-XXXXX</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                <input type="text" id="nameInput" required 
+                                       placeholder="Enter your full name"
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Integrity Proof -->
-                    <div class="report-section">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">🔐 Cryptographic Integrity Proof</h2>
-                        <div class="bg-green-50 border-2 border-green-500 rounded-lg p-6">
-                            <div class="flex items-center space-x-3 mb-4">
-                                <span class="text-3xl">🛡️</span>
-                                <div>
-                                    <p class="font-bold text-green-800">SHA-256 Hash Verification</p>
-                                    <p class="text-sm text-green-700">Cryptographic proof of evidence integrity</p>
-                                </div>
+                        <!-- Mock Credentials Reference -->
+                        <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p class="text-sm font-semibold text-yellow-800 mb-2">📋 Demo Credentials (For Testing)</p>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-yellow-700">
+                                <div><strong>Officer:</strong> OFF-211013</div>
+                                <div><strong>Medical:</strong> MED-786</div>
+                                <div><strong>Lab Tech:</strong> LAB-404</div>
+                                <div><strong>Judge:</strong> JUDGE-001</div>
                             </div>
-                            <div class="mb-3">
-                                <p class="text-sm text-gray-700 mb-1">Evidence Hash:</p>
-                                <p id="reportEvidenceHash" class="font-mono text-xs bg-white p-3 rounded border border-green-300 break-all"></p>
-                            </div>
-                            <div class="mb-3">
-                                <p class="text-sm text-gray-700 mb-1">Photo Hash:</p>
-                                <p id="reportPhotoHash" class="font-mono text-xs bg-white p-3 rounded border border-green-300 break-all"></p>
-                            </div>
-                            <div id="reportVerificationHistory" class="mt-4">
-                                <!-- Verification history will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Chain of Custody Timeline -->
-                    <div class="report-section">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">📍 Complete Chain of Custody</h2>
-                        <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
-                            <div id="reportTimeline" class="space-y-4">
-                                <!-- Timeline will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lab Findings -->
-                    <div id="reportLabFindingsSection" class="report-section hidden">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">🔬 Laboratory Analysis Results</h2>
-                        <div class="bg-blue-50 border-2 border-blue-500 rounded-lg p-6">
-                            <div id="reportLabFindings">
-                                <!-- Lab findings will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Audit Trail -->
-                    <div class="report-section audit-trail-container">
-                        <div class="audit-trail-watermark">⚖️</div>
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Audit Trail</h2>
-                        <div class="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-6" style="position: relative; z-index: 1;">
-                            <p class="text-sm text-yellow-800 mb-4">Complete access log for this evidence:</p>
-                            <div id="reportAuditLog" class="space-y-2">
-                                <!-- Audit logs will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Certification Footer -->
-                    <div class="report-section border-t-4 border-purple-500 pt-6">
-                        <div class="text-center">
-                            <div class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-lg mb-4">
-                                <p class="text-2xl font-bold">✓ CERTIFIED BY NYAY AI</p>
-                                <p class="text-sm mt-1">Digital Forensic Chain Ledger System</p>
-                            </div>
-                            <p class="text-xs text-gray-600 mt-4">
-                                This report is generated from cryptographically secured evidence records.<br>
-                                All timestamps are in ISO 8601 format. All hashes use SHA-256 algorithm.<br>
-                                Report ID: <span id="reportId" class="font-mono"></span>
-                            </p>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex justify-center space-x-4 mt-8 no-print">
-                        <button onclick="window.print()" class="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition font-semibold">
-                            🖨️ Print Report
+                    <div class="flex justify-between items-center pt-6 border-t">
+                        <button type="button" id="backBtn" class="hidden px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold">
+                            ← Back
                         </button>
-                        <button id="downloadReportPDF" class="px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition font-semibold">
-                            📥 Download PDF
+                        <button type="submit" id="loginBtn" class="hidden ml-auto px-8 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition font-semibold shadow-lg">
+                            🔐 Access Workspace
                         </button>
-                        <button id="closeReport" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                            Close
-                        </button>
+                    </div>
+                </form>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden mt-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <h3 class="font-semibold text-red-900">Authentication Failed</h3>
+                            <p class="text-sm text-red-800 mt-1" id="errorText"></p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-gray-600">
+                <p class="text-sm">🔒 Secure Authentication | All access attempts are logged</p>
+                <p class="text-xs mt-2">Nyay AI v2.0 - Digital Forensic Chain Ledger</p>
             </div>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 mt-12">
-        <div class="container mx-auto px-4 text-center">
-            <p class="text-sm">⚖️ Nyay AI - Digital Forensic Chain Ledger</p>
-            <p class="text-xs text-gray-400 mt-1">Preventing Evidence Tampering | Ensuring Justice</p>
-        </div>
-    </footer>
+    </div>
 
     <script>
-        // Global variables
-        let photoBase64 = null;
-        let photoHash = null;
-        let currentLocation = null;
-        let currentTransferEvidenceId = null;
-        let currentLabEvidenceId = null;
-        let currentRole = 'officer'; // Default role
-
-        // Role Permissions Configuration (Zero-Trust)
-        const ROLE_PERMISSIONS = {
-            officer: {
-                name: 'Police Officer',
-                description: 'Can register evidence and transfer custody',
-                canRegister: true,
-                canTransfer: true,
-                canVerify: true,
-                canViewFull: true,
-                canAddLabFindings: false,
-                canViewLabFindings: true,
-                canGenerateReport: true
+        // Mock credentials database (Updated per basic_rules.md)
+        const MOCK_CREDENTIALS = {
+            'OFF-211013': {
+                role: 'INVESTIGATING_OFFICER',
+                name: 'Officer Rajesh Kumar',
+                dashboard: 'officer-dashboard.html'
             },
-            lab_tech: {
+            'MED-786': {
+                role: 'MEDICAL_OFFICER',
+                name: 'Dr. Priya Sharma',
+                dashboard: 'medical-dashboard.html'
+            },
+            'LAB-404': {
+                role: 'LAB_TECHNICIAN',
+                name: 'Lab Tech Amit Patel',
+                dashboard: 'lab-dashboard.html'
+            },
+            'JUDGE-001': {
+                role: 'JUDGE',
+                name: 'Hon. Justice Meera Singh',
+                dashboard: 'judge-dashboard.html'
+            }
+        };
+
+        // Role configuration
+        const ROLE_CONFIG = {
+            INVESTIGATING_OFFICER: {
+                name: 'Investigating Officer',
+                description: 'Register crime scene evidence and manage custody transfers',
+                credentialLabel: 'Officer Badge ID',
+                credentialFormat: 'OFF-XXXXX',
+                icon: `<svg class="w-full h-full text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`
+            },
+            MEDICAL_OFFICER: {
+                name: 'Medical Officer',
+                description: 'Register MLC trauma reports and biological samples',
+                credentialLabel: 'Medical Officer ID',
+                credentialFormat: 'MED-XXX',
+                icon: `<svg class="w-full h-full text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+            },
+            LAB_TECHNICIAN: {
                 name: 'Lab Technician',
-                description: 'Can only add lab findings to existing evidence',
-                canRegister: false,
-                canTransfer: false,
-                canVerify: true,
-                canViewFull: true,
-                canAddLabFindings: true,
-                canViewLabFindings: true,
-                canGenerateReport: false
+                description: 'Verify evidence integrity and add lab findings',
+                credentialLabel: 'Lab Technician ID',
+                credentialFormat: 'LAB-XXXXX',
+                icon: `<svg class="w-full h-full text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>`
             },
-            judge: {
+            JUDGE: {
                 name: 'Judge',
-                description: 'Full read-only access to all evidence and chain of custody',
-                canRegister: false,
-                canTransfer: false,
-                canVerify: true,
-                canViewFull: true,
-                canAddLabFindings: false,
-                canViewLabFindings: true,
-                canGenerateReport: true
-            },
-            victim: {
-                name: 'Victim',
-                description: 'Can only view status of their specific case',
-                canRegister: false,
-                canTransfer: false,
-                canVerify: false,
-                canViewFull: false,
-                canAddLabFindings: false,
-                canViewLabFindings: false,
-                canGenerateReport: false
+                description: 'Review evidence and generate court reports',
+                credentialLabel: 'Judge ID',
+                credentialFormat: 'JUDGE-XXX',
+                icon: `<svg class="w-full h-full text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>`
             }
         };
 
-        // Initialize on page load
+        let selectedRole = null;
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            initializeRoleSystem();
-            loadEvidenceList();
+            // Check if already logged in
+            const session = getSession();
+            if (session) {
+                redirectToDashboard(session.role);
+                return;
+            }
+
             setupEventListeners();
-            attemptAutoGPS();
         });
 
-        // Initialize Role System
-        function initializeRoleSystem() {
-            const roleSelector = document.getElementById('roleSelector');
-            const userId = document.getElementById('userId');
-            const victimCaseId = document.getElementById('victimCaseId');
-            
-            // Load saved role or default to officer
-            currentRole = localStorage.getItem('nyai_current_role') || 'officer';
-            roleSelector.value = currentRole;
-            
-            // Update UI based on role
-            updateRoleUI();
-            
-            // Role selector change event
-            roleSelector.addEventListener('change', function() {
-                currentRole = this.value;
-                localStorage.setItem('nyai_current_role', currentRole);
-                updateRoleUI();
-                loadEvidenceList(); // Reload with role-based filtering
-            });
-            
-            // Enable/disable victim case ID based on role
-            victimCaseId.disabled = currentRole !== 'victim';
-        }
-
-        // Update UI based on current role
-        function updateRoleUI() {
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            const roleDescription = document.getElementById('roleDescription');
-            const victimCaseId = document.getElementById('victimCaseId');
-            const registrationForm = document.getElementById('evidenceForm').parentElement;
-            
-            // Update role description
-            roleDescription.textContent = permissions.description;
-            
-            // Show/hide registration form
-            if (permissions.canRegister) {
-                registrationForm.classList.remove('hidden');
-            } else {
-                registrationForm.classList.add('hidden');
-            }
-            
-            // Enable/disable victim case ID
-            victimCaseId.disabled = currentRole !== 'victim';
-            
-            // Update user ID placeholder
-            const userIdInput = document.getElementById('userId');
-            switch(currentRole) {
-                case 'officer':
-                    userIdInput.placeholder = 'OFF-XXXXX';
-                    userIdInput.value = 'OFF-12345';
-                    break;
-                case 'lab_tech':
-                    userIdInput.placeholder = 'LAB-XXXXX';
-                    userIdInput.value = 'LAB-001';
-                    break;
-                case 'judge':
-                    userIdInput.placeholder = 'JDG-XXXXX';
-                    userIdInput.value = 'JDG-789';
-                    break;
-                case 'victim':
-                    userIdInput.placeholder = 'VIC-XXXXX';
-                    userIdInput.value = 'VIC-456';
-                    victimCaseId.value = 'CR-2026-MH-5678';
-                    break;
-            }
-        }
-
-        // Zero-Trust Permission Check
-        function checkPermission(action) {
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            
-            switch(action) {
-                case 'register':
-                    return permissions.canRegister;
-                case 'transfer':
-                    return permissions.canTransfer;
-                case 'verify':
-                    return permissions.canVerify;
-                case 'viewFull':
-                    return permissions.canViewFull;
-                case 'addLabFindings':
-                    return permissions.canAddLabFindings;
-                case 'viewLabFindings':
-                    return permissions.canViewLabFindings;
-                default:
-                    return false;
-            }
-        }
-
-        // Block unauthorized actions
-        function blockUnauthorizedAction(action) {
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            alert(`🚫 ACCESS DENIED\n\nRole: ${permissions.name}\nAction: ${action}\n\nYou do not have permission to perform this action.`);
-        }
-
-        // Setup event listeners
         function setupEventListeners() {
-            document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
-            document.getElementById('captureGPS').addEventListener('click', captureGPS);
-            document.getElementById('evidenceForm').addEventListener('submit', handleSubmit);
-            document.getElementById('resetBtn').addEventListener('click', resetForm);
-            document.getElementById('closeModal').addEventListener('click', closeModal);
-            document.getElementById('downloadQR').addEventListener('click', downloadQRCode);
-            document.getElementById('refreshList').addEventListener('click', loadEvidenceList);
-            
-            // Transfer modal listeners
-            document.getElementById('closeTransferModal').addEventListener('click', closeTransferModal);
-            document.getElementById('cancelTransfer').addEventListener('click', closeTransferModal);
-            document.getElementById('transferForm').addEventListener('submit', handleTransfer);
-            
-            // Lab findings modal listeners
-            document.getElementById('closeLabFindingsModal').addEventListener('click', closeLabFindingsModal);
-            document.getElementById('cancelLabFindings').addEventListener('click', closeLabFindingsModal);
-            document.getElementById('labFindingsForm').addEventListener('submit', handleLabFindings);
-            
-            // Tracking listeners
-            document.getElementById('closeTracking').addEventListener('click', closeTracking);
+            // Role card selection
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    selectRole(this.dataset.role);
+                });
+            });
+
+            // Back button
+            document.getElementById('backBtn').addEventListener('click', resetSelection);
+
+            // Form submission
+            document.getElementById('authForm').addEventListener('submit', handleLogin);
         }
 
-        // Auto-capture GPS on page load
-        function attemptAutoGPS() {
-            if (navigator.geolocation) {
-                document.getElementById('gpsStatus').textContent = '📍 Attempting to auto-capture GPS...';
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        currentLocation = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        };
-                        document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                        document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                        document.getElementById('gpsStatus').textContent = '✅ GPS captured automatically';
-                        document.getElementById('gpsStatus').className = 'text-sm text-green-600 mt-2';
-                    },
-                    (error) => {
-                        document.getElementById('gpsStatus').textContent = '⚠️ Auto-capture failed. Click button to retry.';
-                        document.getElementById('gpsStatus').className = 'text-sm text-orange-600 mt-2';
-                    }
-                );
-            }
+        function selectRole(role) {
+            selectedRole = role;
+            const config = ROLE_CONFIG[role];
+
+            // Update UI
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-role="${role}"]`).classList.add('selected');
+
+            // Show credential section
+            document.getElementById('credentialSection').classList.remove('hidden');
+            document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('loginBtn').classList.remove('hidden');
+
+            // Update role info
+            document.getElementById('selectedRoleIcon').innerHTML = config.icon;
+            document.getElementById('selectedRoleName').textContent = config.name;
+            document.getElementById('selectedRoleDesc').textContent = config.description;
+            document.getElementById('credentialLabel').textContent = config.credentialLabel;
+            document.getElementById('credentialHint').textContent = `Format: ${config.credentialFormat}`;
+
+            // Clear inputs
+            document.getElementById('credentialInput').value = '';
+            document.getElementById('nameInput').value = '';
+            document.getElementById('errorMessage').classList.add('hidden');
+
+            // Scroll to form
+            document.getElementById('credentialSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // Manual GPS capture
-        function captureGPS() {
-            if (!navigator.geolocation) {
-                alert('Geolocation is not supported by your browser');
+        function resetSelection() {
+            selectedRole = null;
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('credentialSection').classList.add('hidden');
+            document.getElementById('backBtn').classList.add('hidden');
+            document.getElementById('loginBtn').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const credentialId = document.getElementById('credentialInput').value.trim().toUpperCase();
+            const name = document.getElementById('nameInput').value.trim();
+
+            // Validate credential format
+            if (!validateCredentialFormat(credentialId, selectedRole)) {
+                showError(`Invalid credential format. Expected: ${ROLE_CONFIG[selectedRole].credentialFormat}`);
                 return;
             }
 
-            document.getElementById('gpsStatus').textContent = '📍 Capturing GPS location...';
-            document.getElementById('gpsStatus').className = 'text-sm text-blue-600 mt-2';
+            // Check mock credentials
+            const credential = MOCK_CREDENTIALS[credentialId];
+            if (!credential) {
+                showError('Invalid credentials. Please check your credential ID and try again.');
+                return;
+            }
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    currentLocation = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    };
-                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                    document.getElementById('gpsStatus').textContent = '✅ GPS location captured successfully';
-                    document.getElementById('gpsStatus').className = 'text-sm text-green-600 mt-2';
+            // Verify role matches
+            if (credential.role !== selectedRole) {
+                showError('Credential ID does not match the selected role.');
+                return;
+            }
+
+            // Create session
+            const session = {
+                role: selectedRole,
+                credentialId: credentialId,
+                name: name,
+                loginTime: new Date().toISOString(),
+                sessionId: generateSessionId(),
+                permissions: getPermissions(selectedRole)
+            };
+
+            // Save session
+            saveSession(session);
+
+            // Log authentication
+            logAuthentication(session);
+
+            // Redirect to dashboard
+            redirectToDashboard(selectedRole);
+        }
+
+        function validateCredentialFormat(credentialId, role) {
+            const patterns = {
+                INVESTIGATING_OFFICER: /^OFF-\d{6}$/,
+                MEDICAL_OFFICER: /^MED-\d{3}$/,
+                LAB_TECHNICIAN: /^LAB-\d{3}$/,
+                JUDGE: /^JUDGE-\d{3}$/
+            };
+            return patterns[role].test(credentialId);
+        }
+
+        function getPermissions(role) {
+            const permissions = {
+                INVESTIGATING_OFFICER: {
+                    canRegisterEvidence: true,
+                    canRegisterCrimeScene: true,
+                    canRegisterMedical: false,
+                    canTransferCustody: true,
+                    canVerifyIntegrity: false,
+                    canGenerateReport: false
                 },
-                (error) => {
-                    document.getElementById('gpsStatus').textContent = '❌ Failed to capture GPS: ' + error.message;
-                    document.getElementById('gpsStatus').className = 'text-sm text-red-600 mt-2';
+                MEDICAL_OFFICER: {
+                    canRegisterEvidence: true,
+                    canRegisterCrimeScene: false,
+                    canRegisterMedical: true,
+                    canTransferCustody: true,
+                    canVerifyIntegrity: false,
+                    canGenerateReport: false
+                },
+                LAB_TECHNICIAN: {
+                    canRegisterEvidence: false,
+                    canRegisterCrimeScene: false,
+                    canRegisterMedical: false,
+                    canTransferCustody: true,
+                    canVerifyIntegrity: true,
+                    canGenerateReport: false
+                },
+                JUDGE: {
+                    canRegisterEvidence: false,
+                    canRegisterCrimeScene: false,
+                    canRegisterMedical: false,
+                    canTransferCustody: false,
+                    canVerifyIntegrity: true,
+                    canGenerateReport: true
                 }
-            );
-        }
-
-        // Handle photo upload
-        async function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // Validate file size (5MB max)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('File size must be less than 5MB');
-                event.target.value = '';
-                return;
-            }
-
-            // Read file as base64
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                photoBase64 = e.target.result;
-                
-                // Show preview
-                const preview = document.getElementById('photoPreview');
-                const prompt = document.getElementById('uploadPrompt');
-                preview.src = photoBase64;
-                preview.classList.remove('hidden');
-                prompt.classList.add('hidden');
-
-                // Generate hash
-                photoHash = await generateSHA256(photoBase64);
-                console.log('Photo hash generated:', photoHash);
             };
-            reader.readAsDataURL(file);
+            return permissions[role];
         }
 
-        // Generate SHA-256 hash
-        async function generateSHA256(data) {
-            const encoder = new TextEncoder();
-            const dataBuffer = encoder.encode(data);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
-        // Generate unique evidence ID
-        function generateEvidenceId() {
-            const year = new Date().getFullYear();
-            const random = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
-            return `EV-${year}-${random}`;
+        function saveSession(session) {
+            localStorage.setItem('nyai_user_session', JSON.stringify(session));
         }
 
-        // Handle form submission
-        async function handleSubmit(event) {
-            event.preventDefault();
-
-            // Zero-Trust: Check permission
-            if (!checkPermission('register')) {
-                blockUnauthorizedAction('Register Evidence');
-                return;
-            }
-
-            // Validate photo
-            if (!photoBase64) {
-                alert('Please upload a photo');
-                return;
-            }
-
-            // Validate GPS
-            if (!currentLocation) {
-                alert('Please capture GPS location');
-                return;
-            }
-
-            // Show loading state
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ Processing...';
-
-            try {
-                // Collect form data
-                const evidenceData = {
-                    id: generateEvidenceId(),
-                    caseNumber: document.getElementById('caseNumber').value,
-                    category: document.getElementById('category').value,
-                    description: document.getElementById('description').value,
-                    photo: photoBase64,
-                    photoHash: photoHash,
-                    location: currentLocation,
-                    timestamp: new Date().toISOString(),
-                    registeredBy: document.getElementById('officerName').value,
-                    officerId: document.getElementById('officerId').value,
-                    status: 'Registered',
-                    history: [{
-                        action: 'Registered',
-                        timestamp: new Date().toISOString(),
-                        performedBy: document.getElementById('officerName').value,
-                        officerId: document.getElementById('officerId').value,
-                        location: currentLocation,
-                        notes: 'Initial evidence registration'
-                    }]
-                };
-
-                // Generate combined evidence hash
-                const evidenceString = JSON.stringify({
-                    photo: photoHash,
-                    location: currentLocation,
-                    timestamp: evidenceData.timestamp,
-                    description: evidenceData.description,
-                    caseNumber: evidenceData.caseNumber
-                });
-                evidenceData.evidenceHash = await generateSHA256(evidenceString);
-
-                // Save to localStorage
-                saveEvidence(evidenceData);
-
-                // Add audit log
-                addAuditLog('EVIDENCE_REGISTERED', evidenceData.id, {
-                    caseNumber: evidenceData.caseNumber,
-                    category: evidenceData.category,
-                    registeredBy: evidenceData.registeredBy
-                });
-
-                // Show success modal
-                showSuccessModal(evidenceData);
-
-                // Reset form
-                resetForm();
-                loadEvidenceList();
-
-            } catch (error) {
-                alert('Error registering evidence: ' + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '🔒 Register Evidence';
-            }
+        function getSession() {
+            const sessionData = localStorage.getItem('nyai_user_session');
+            return sessionData ? JSON.parse(sessionData) : null;
         }
 
-        // Save evidence to localStorage
-        function saveEvidence(evidence) {
-            // Get existing evidence list
-            let evidenceList = JSON.parse(localStorage.getItem('nyai_evidence_list') || '[]');
-            evidenceList.push(evidence.id);
-            localStorage.setItem('nyai_evidence_list', JSON.stringify(evidenceList));
-
-            // Save individual evidence
-            localStorage.setItem(`nyai_evidence_${evidence.id}`, JSON.stringify(evidence));
-
-            // Initialize empty custody chain
-            localStorage.setItem(`nyai_custody_${evidence.id}`, JSON.stringify([]));
-        }
-
-        // Show success modal
-        function showSuccessModal(evidence) {
-            document.getElementById('modalEvidenceId').textContent = evidence.id;
-            document.getElementById('modalTimestamp').textContent = new Date(evidence.timestamp).toLocaleString();
-            document.getElementById('modalHash').textContent = evidence.evidenceHash;
-
-            // Generate QR code
-            const qrContainer = document.getElementById('qrCodeContainer');
-            qrContainer.innerHTML = '';
-            const qrData = `${evidence.id}|${evidence.evidenceHash.substring(0, 16)}`;
-            new QRCode(qrContainer, {
-                text: qrData,
-                width: 200,
-                height: 200
-            });
-
-            document.getElementById('successModal').classList.remove('hidden');
-        }
-
-        // Close modal
-        function closeModal() {
-            document.getElementById('successModal').classList.add('hidden');
-        }
-
-        // Download QR code
-        function downloadQRCode() {
-            const qrCanvas = document.querySelector('#qrCodeContainer canvas');
-            if (qrCanvas) {
-                const link = document.createElement('a');
-                link.download = `evidence-qr-${document.getElementById('modalEvidenceId').textContent}.png`;
-                link.href = qrCanvas.toDataURL();
-                link.click();
-            }
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('evidenceForm').reset();
-            photoBase64 = null;
-            photoHash = null;
-            document.getElementById('photoPreview').classList.add('hidden');
-            document.getElementById('uploadPrompt').classList.remove('hidden');
-            document.getElementById('latitude').value = '';
-            document.getElementById('longitude').value = '';
-            currentLocation = null;
-            document.getElementById('gpsStatus').textContent = '';
-        }
-
-        // Hash verification function - recalculates and compares hash
-        async function verifyEvidenceIntegrity(evidenceId) {
-            // Zero-Trust: Check permission
-            if (!checkPermission('verify')) {
-                blockUnauthorizedAction('Verify Evidence Integrity');
-                return;
-            }
-
-            const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${evidenceId}`));
-            if (!evidence) {
-                alert('Evidence not found!');
-                return;
-            }
-
-            // Show verification in progress
-            const statusElement = document.getElementById(`status-${evidenceId}`);
-            const shieldElement = document.getElementById(`shield-${evidenceId}`);
-            const verifyBtn = document.getElementById(`verify-${evidenceId}`);
-            
-            verifyBtn.textContent = '⏳ Verifying...';
-            verifyBtn.disabled = true;
-
-            // Recalculate the evidence hash
-            const evidenceString = JSON.stringify({
-                photo: evidence.photoHash,
-                location: evidence.location,
-                timestamp: evidence.timestamp,
-                description: evidence.description,
-                caseNumber: evidence.caseNumber
-            });
-            const recalculatedHash = await generateSHA256(evidenceString);
-
-            // Compare hashes
-            const isIntact = recalculatedHash === evidence.evidenceHash;
-
-            // Add verification to history
-            if (!evidence.verificationHistory) {
-                evidence.verificationHistory = [];
-            }
-            evidence.verificationHistory.push({
-                timestamp: new Date().toISOString(),
-                verifiedBy: document.getElementById('userId').value,
-                status: isIntact ? 'VERIFIED' : 'TAMPERED',
-                expectedHash: evidence.evidenceHash,
-                calculatedHash: recalculatedHash
-            });
-
-            // Add audit log
-            addAuditLog('INTEGRITY_VERIFIED', evidenceId, {
-                status: isIntact ? 'VERIFIED' : 'TAMPERED',
-                verifiedBy: document.getElementById('userId').value
-            });
-
-            // Update UI based on verification result
-            if (isIntact) {
-                statusElement.className = 'px-2 py-1 bg-green-100 text-green-800 text-xs rounded';
-                statusElement.textContent = '✓ VERIFIED';
-                shieldElement.className = 'shield-icon shield-safe';
-                shieldElement.textContent = '🛡️';
-                shieldElement.title = 'Evidence Integrity: SAFE';
-                verifyBtn.textContent = '✓ Verified';
-                verifyBtn.className = 'px-3 py-1 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition';
-            } else {
-                statusElement.className = 'px-2 py-1 bg-red-100 text-red-800 text-xs rounded tampered-flash';
-                statusElement.textContent = '⚠️ TAMPERED';
-                shieldElement.className = 'shield-icon shield-tampered';
-                shieldElement.textContent = '⚠️';
-                shieldElement.title = 'Evidence Integrity: COMPROMISED';
-                verifyBtn.textContent = '⚠️ Tampered';
-                verifyBtn.className = 'px-3 py-1 bg-red-500 text-white text-xs rounded-lg';
-                
-                // Mark evidence as tampered
-                evidence.tampered = true;
-                evidence.tamperedAt = new Date().toISOString();
-                
-                alert(`⚠️ CRITICAL ALERT: Evidence ${evidenceId} has been TAMPERED!\n\nExpected Hash: ${evidence.evidenceHash}\nCurrent Hash: ${recalculatedHash}\n\nThis evidence is no longer admissible in court.`);
-            }
-
-            // Save updated evidence with verification history
-            localStorage.setItem(`nyai_evidence_${evidenceId}`, JSON.stringify(evidence));
-
-            setTimeout(() => {
-                verifyBtn.disabled = false;
-            }, 1000);
-        }
-
-        // Load evidence list with integrity indicators and role-based filtering
-        function loadEvidenceList() {
-            const evidenceList = JSON.parse(localStorage.getItem('nyai_evidence_list') || '[]');
-            const container = document.getElementById('evidenceList');
-            const permissions = ROLE_PERMISSIONS[currentRole];
-
-            // Filter evidence based on role
-            let filteredList = evidenceList;
-            if (currentRole === 'victim') {
-                const victimCaseId = document.getElementById('victimCaseId').value;
-                if (!victimCaseId) {
-                    container.innerHTML = '<p class="text-orange-500 text-center py-8">⚠️ Please enter your Case ID to view evidence status.</p>';
-                    return;
-                }
-                filteredList = evidenceList.filter(id => {
-                    const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${id}`));
-                    return evidence.caseNumber === victimCaseId;
-                });
-            }
-
-            if (filteredList.length === 0) {
-                const message = currentRole === 'victim'
-                    ? '<p class="text-gray-500 text-center py-8">No evidence found for your case ID.</p>'
-                    : '<p class="text-gray-500 text-center py-8">No evidence registered yet. Register your first evidence above.</p>';
-                container.innerHTML = message;
-                return;
-            }
-
-            container.innerHTML = filteredList.map(id => {
-                const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${id}`));
-                const historyCount = evidence.history ? evidence.history.length : 0;
-                const isTampered = evidence.tampered || false;
-                const labFindings = evidence.labFindings || [];
-                
-                // Role-based privacy filters
-                const isVictim = currentRole === 'victim';
-                const hashPreview = isVictim ? '🔒 HIDDEN' : (evidence.evidenceHash ? evidence.evidenceHash.substring(0, 16) + '...' : 'N/A');
-                
-                // Determine initial status and shield
-                const statusClass = isTampered ? 'px-2 py-1 bg-red-100 text-red-800 text-xs rounded tampered-flash' : 'px-2 py-1 bg-green-100 text-green-800 text-xs rounded';
-                const statusText = isTampered ? '⚠️ TAMPERED' : evidence.status;
-                const shieldClass = isTampered ? 'shield-icon shield-tampered' : 'shield-icon shield-safe';
-                const shieldIcon = isTampered ? '⚠️' : '🛡️';
-                const shieldTitle = isTampered ? 'Evidence Integrity: COMPROMISED' : 'Evidence Integrity: SAFE';
-                
-                // Build lab findings display
-                const labFindingsHTML = permissions.canViewLabFindings && labFindings.length > 0 ? `
-                    <div class="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                        <p class="text-xs font-semibold text-blue-800 mb-1">🔬 Lab Findings (${labFindings.length}):</p>
-                        ${labFindings.map(finding => `
-                            <div class="text-xs text-blue-700 mb-1">
-                                <strong>${finding.testType}:</strong> ${finding.resultStatus} - ${finding.findings.substring(0, 50)}...
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : '';
-                
-                // Victim view (minimal information)
-                if (isVictim) {
-                    return `
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition ${isTampered ? 'border-red-500 border-2' : ''}">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <span id="shield-${evidence.id}" class="${shieldClass}" title="${shieldTitle}">${shieldIcon}</span>
-                                        <span class="font-mono font-bold text-purple-600">${evidence.id}</span>
-                                        <span id="status-${evidence.id}" class="${statusClass}">${statusText}</span>
-                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">${evidence.category}</span>
-                                    </div>
-                                    <p class="text-sm text-gray-600 mb-1"><strong>Case:</strong> ${evidence.caseNumber}</p>
-                                    <p class="text-sm text-gray-600 mb-1"><strong>Status:</strong> ${evidence.status}</p>
-                                    <p class="text-xs text-gray-500"><strong>Registered:</strong> ${new Date(evidence.timestamp).toLocaleString()}</p>
-                                    <p class="text-xs text-gray-400 italic mt-2">🔒 Full details are restricted for privacy</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                // Full view for authorized roles
-                return `
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition ${isTampered ? 'border-red-500 border-2' : ''}">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <span id="shield-${evidence.id}" class="${shieldClass}" title="${shieldTitle}">${shieldIcon}</span>
-                                    <span class="font-mono font-bold text-purple-600">${evidence.id}</span>
-                                    <span id="status-${evidence.id}" class="${statusClass}">${statusText}</span>
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">${evidence.category}</span>
-                                    <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">📜 ${historyCount} events</span>
-                                </div>
-                                <p class="text-sm text-gray-600 mb-1"><strong>Case:</strong> ${evidence.caseNumber}</p>
-                                <p class="text-sm text-gray-600 mb-1"><strong>Description:</strong> ${evidence.description}</p>
-                                <p class="text-sm text-gray-600 mb-1"><strong>SHA-256 Hash:</strong> <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">${hashPreview}</span></p>
-                                <p class="text-xs text-gray-500"><strong>Registered:</strong> ${new Date(evidence.timestamp).toLocaleString()}</p>
-                                <p class="text-xs text-gray-500"><strong>By:</strong> ${evidence.registeredBy} (${evidence.officerId})</p>
-                                ${isTampered ? `<p class="text-xs text-red-600 font-bold mt-1">⚠️ Tampered at: ${new Date(evidence.tamperedAt).toLocaleString()}</p>` : ''}
-                                ${labFindingsHTML}
-                                <div class="mt-3 flex space-x-2 flex-wrap gap-2">
-                                    ${permissions.canVerify ? `
-                                        <button id="verify-${evidence.id}" onclick="verifyEvidenceIntegrity('${evidence.id}')"
-                                                class="px-3 py-1 bg-indigo-500 text-white text-xs rounded-lg hover:bg-indigo-600 transition">
-                                            🔍 Verify Integrity
-                                        </button>
-                                    ` : ''}
-                                    ${permissions.canTransfer ? `
-                                        <button onclick="openTransferModal('${evidence.id}')"
-                                                class="px-4 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition ${isTampered ? 'immutable-locked' : ''}">
-                                            🔄 Transfer
-                                        </button>
-                                    ` : ''}
-                                    ${permissions.canAddLabFindings ? `
-                                        <button onclick="openLabFindingsModal('${evidence.id}')"
-                                                class="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition">
-                                            🔬 Add Lab Findings
-                                        </button>
-                                    ` : ''}
-                                    <button onclick="showTracking('${evidence.id}')"
-                                            class="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition">
-                                        📍 Track History
-                                    </button>
-                                    ${permissions.canGenerateReport ? `
-                                        <button onclick="openCourtReport('${evidence.id}')"
-                                                class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm rounded-lg hover:opacity-90 transition font-semibold">
-                                            📋 Generate Court Report
-                                        </button>
-                                    ` : ''}
-                                    <button class="px-4 py-2 bg-gray-300 text-gray-500 text-sm rounded-lg immutable-locked" title="Edit is locked for evidence integrity">
-                                        🔒 Edit (Locked)
-                                    </button>
-                                    <button class="px-4 py-2 bg-gray-300 text-gray-500 text-sm rounded-lg immutable-locked" title="Delete is locked for evidence integrity">
-                                        🔒 Delete (Locked)
-                                    </button>
-                                </div>
-                            </div>
-                            <img src="${evidence.photo}" alt="Evidence" class="w-20 h-20 object-cover rounded ml-4">
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Open transfer modal
-        function openTransferModal(evidenceId) {
-            // Zero-Trust: Check permission
-            if (!checkPermission('transfer')) {
-                blockUnauthorizedAction('Transfer Evidence');
-                return;
-            }
-
-            currentTransferEvidenceId = evidenceId;
-            const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${evidenceId}`));
-            
-            document.getElementById('transferEvidenceId').textContent = evidenceId;
-            
-            // Get current holder from latest history entry
-            const history = evidence.history || [];
-            const latestEntry = history[history.length - 1];
-            const currentHolder = latestEntry ? `${latestEntry.performedBy} (${latestEntry.officerId})` : 'Unknown';
-            document.getElementById('transferCurrentHolder').textContent = currentHolder;
-            
-            // Reset form
-            document.getElementById('transferForm').reset();
-            
-            // Show modal
-            document.getElementById('transferModal').classList.remove('hidden');
-        }
-
-        // Close transfer modal
-        function closeTransferModal() {
-            document.getElementById('transferModal').classList.add('hidden');
-            currentTransferEvidenceId = null;
-        // Open lab findings modal
-        function openLabFindingsModal(evidenceId) {
-            // Zero-Trust: Check permission
-            if (!checkPermission('addLabFindings')) {
-                blockUnauthorizedAction('Add Lab Findings');
-                return;
-            }
-
-            currentLabEvidenceId = evidenceId;
-            document.getElementById('labEvidenceId').textContent = evidenceId;
-            
-            // Reset form
-            document.getElementById('labFindingsForm').reset();
-            
-            // Show modal
-            document.getElementById('labFindingsModal').classList.remove('hidden');
-        }
-
-        // Close lab findings modal
-        function closeLabFindingsModal() {
-            document.getElementById('labFindingsModal').classList.add('hidden');
-            currentLabEvidenceId = null;
-        }
-
-        // Handle lab findings submission
-        async function handleLabFindings(event) {
-            event.preventDefault();
-            
-            if (!currentLabEvidenceId) return;
-            
-            // Zero-Trust: Double-check permission
-            if (!checkPermission('addLabFindings')) {
-                blockUnauthorizedAction('Add Lab Findings');
-                return;
-            }
-            
-            try {
-                // Get evidence
-                const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${currentLabEvidenceId}`));
-                
-                // Create lab findings entry
-                const labFinding = {
-                    testType: document.getElementById('testType').value,
-                    findings: document.getElementById('labFindings').value,
-                    resultStatus: document.getElementById('resultStatus').value,
-                    technicianNotes: document.getElementById('technicianNotes').value || 'No additional notes',
-                    technicianId: document.getElementById('userId').value,
-                    timestamp: new Date().toISOString()
-                };
-                
-                // Initialize lab findings array if not exists
-                if (!evidence.labFindings) {
-                    evidence.labFindings = [];
-                }
-                
-                // Append lab findings (never overwrite)
-                evidence.labFindings.push(labFinding);
-                
-                // Add to history
-                if (!evidence.history) {
-                    evidence.history = [];
-                }
-                evidence.history.push({
-                    action: 'Lab Analysis Completed',
-                    timestamp: new Date().toISOString(),
-                    performedBy: `Lab Technician`,
-                    officerId: document.getElementById('userId').value,
-                    notes: `${labFinding.testType}: ${labFinding.resultStatus}`
-                });
-                
-                // Update status
-                evidence.status = `Lab Analysis: ${labFinding.resultStatus}`;
-                
-                // Add audit log
-                addAuditLog('LAB_FINDINGS_ADDED', currentLabEvidenceId, {
-                    testType: labFinding.testType,
-                    resultStatus: labFinding.resultStatus,
-                    technicianId: labFinding.technicianId
-                });
-                
-                // Save updated evidence
-                localStorage.setItem(`nyai_evidence_${currentLabEvidenceId}`, JSON.stringify(evidence));
-                
-                // Close modal and refresh list
-                closeLabFindingsModal();
-                loadEvidenceList();
-                
-                // Show success message
-                alert(`✅ Lab findings successfully added to Evidence ${currentLabEvidenceId}`);
-                
-            } catch (error) {
-                alert('Error adding lab findings: ' + error.message);
-            }
-        }
-
-        }
-
-        // Handle transfer
-        async function handleTransfer(event) {
-            event.preventDefault();
-            
-            if (!currentTransferEvidenceId) return;
-            
-            // Zero-Trust: Double-check permission
-            if (!checkPermission('transfer')) {
-                blockUnauthorizedAction('Transfer Evidence');
-                return;
-            }
-            
-            try {
-                // Get evidence
-                const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${currentTransferEvidenceId}`));
-                
-                // Create transfer entry
-                const transferEntry = {
-                    action: 'Transferred',
-                    timestamp: new Date().toISOString(),
-                    receiverId: document.getElementById('receiverId').value,
-                    receiverName: document.getElementById('receiverName').value,
-                    destination: document.getElementById('destination').value,
-                    condition: document.getElementById('condition').value,
-                    notes: document.getElementById('transferNotes').value || 'No additional notes',
-                    performedBy: evidence.history[evidence.history.length - 1].performedBy,
-                    officerId: evidence.history[evidence.history.length - 1].officerId
-                };
-                
-                // Append to history (never overwrite)
-                if (!evidence.history) {
-                    evidence.history = [];
-                }
-                evidence.history.push(transferEntry);
-                
-                // Update status
-                evidence.status = `In Transit to ${transferEntry.destination}`;
-                
-                // Add audit log
-                addAuditLog('EVIDENCE_TRANSFERRED', currentTransferEvidenceId, {
-                    transferredTo: transferEntry.receiverName,
-                    destination: transferEntry.destination,
-                    condition: transferEntry.condition
-                });
-                
-                // Save updated evidence
-                localStorage.setItem(`nyai_evidence_${currentTransferEvidenceId}`, JSON.stringify(evidence));
-                
-                // Close modal and refresh list
-                closeTransferModal();
-                loadEvidenceList();
-                
-                // Show success message
-                alert(`✅ Evidence ${currentTransferEvidenceId} successfully transferred to ${transferEntry.receiverName}`);
-                
-            } catch (error) {
-                alert('Error processing transfer: ' + error.message);
-            }
-        }
-
-        // Show tracking timeline
-        function showTracking(evidenceId) {
-            const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${evidenceId}`));
-            
-            // Add audit log for viewing evidence
-            addAuditLog('EVIDENCE_VIEWED', evidenceId, {
-                action: 'Chain of custody viewed',
-                viewedBy: document.getElementById('userId').value
-            });
-            
-            document.getElementById('trackingEvidenceId').textContent = evidenceId;
-            document.getElementById('trackingCaseNumber').textContent = evidence.caseNumber;
-            
-            const timeline = document.getElementById('custodyTimeline');
-            const history = evidence.history || [];
-            
-            if (history.length === 0) {
-                timeline.innerHTML = '<p class="text-gray-500 text-center py-4">No custody history available.</p>';
-            } else {
-                timeline.innerHTML = history.map((entry, index) => {
-                    const isLatest = index === history.length - 1;
-                    const icon = entry.action === 'Registered' ? '📝' : '🔄';
-                    const bgColor = isLatest ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-gray-300';
-                    
-                    return `
-                        <div class="relative pl-8 pb-6 ${index < history.length - 1 ? 'border-l-2 border-gray-300' : ''}">
-                            <div class="absolute left-0 top-0 w-6 h-6 rounded-full ${isLatest ? 'bg-green-500' : 'bg-gray-400'} flex items-center justify-center text-white text-xs font-bold" style="margin-left: -13px;">
-                                ${index + 1}
-                            </div>
-                            <div class="border-2 ${bgColor} rounded-lg p-4">
-                                <div class="flex items-start justify-between mb-2">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-2xl">${icon}</span>
-                                        <span class="font-bold text-gray-800">${entry.action}</span>
-                                        ${isLatest ? '<span class="px-2 py-1 bg-green-500 text-white text-xs rounded">CURRENT</span>' : ''}
-                                    </div>
-                                    <span class="text-xs text-gray-500">${new Date(entry.timestamp).toLocaleString()}</span>
-                                </div>
-                                
-                                ${entry.action === 'Registered' ? `
-                                    <p class="text-sm text-gray-700 mb-1"><strong>Registered By:</strong> ${entry.performedBy} (${entry.officerId})</p>
-                                    <p class="text-sm text-gray-700 mb-1"><strong>Location:</strong> Lat ${entry.location.latitude.toFixed(6)}, Lng ${entry.location.longitude.toFixed(6)}</p>
-                                ` : `
-                                    <p class="text-sm text-gray-700 mb-1"><strong>Transferred To:</strong> ${entry.receiverName} (${entry.receiverId})</p>
-                                    <p class="text-sm text-gray-700 mb-1"><strong>Destination:</strong> ${entry.destination}</p>
-                                    <p class="text-sm text-gray-700 mb-1"><strong>Condition:</strong> ${entry.condition}</p>
-                                    <p class="text-sm text-gray-700 mb-1"><strong>Transferred By:</strong> ${entry.performedBy} (${entry.officerId})</p>
-                                `}
-                                
-                                <p class="text-sm text-gray-600 mt-2"><strong>Notes:</strong> ${entry.notes}</p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            // Show tracking section and scroll to it
-            document.getElementById('trackingSection').classList.remove('hidden');
-            document.getElementById('trackingSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // ============================================
-        // LAYER 5: AUDIT LOGGING SYSTEM
-        // ============================================
-        
-        // Initialize audit log in localStorage
-        function initializeAuditLog() {
-            if (!localStorage.getItem('nyai_audit_log')) {
-                localStorage.setItem('nyai_audit_log', JSON.stringify([]));
-            }
-        }
-
-        // Add audit log entry
-        function addAuditLog(action, evidenceId, details = {}) {
+        function logAuthentication(session) {
+            // Store in localStorage
             const auditLog = JSON.parse(localStorage.getItem('nyai_audit_log') || '[]');
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            
+            auditLog.push({
+                action: 'LOGIN',
+                role: session.role,
+                credentialId: session.credentialId,
+                timestamp: session.loginTime,
+                sessionId: session.sessionId
+            });
+            localStorage.setItem('nyai_audit_log', JSON.stringify(auditLog));
+
+            // Create forensic custody log entry
+            createForensicLog(session.credentialId, 'LOGIN', {
+                role: session.role,
+                name: session.name,
+                timestamp: session.loginTime,
+                sessionId: session.sessionId
+            });
+        }
+
+        function createForensicLog(roleId, action, details) {
+            // Format: 2026-05-27_[RoleID]_[Action].md
+            const date = new Date().toISOString().split('T')[0];
             const logEntry = {
-                id: `AUDIT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                timestamp: new Date().toISOString(),
-                action: action,
-                evidenceId: evidenceId || 'N/A',
-                roleId: document.getElementById('userId').value,
-                roleName: permissions.name,
-                details: details
+                filename: `${date}_${roleId}_${action}.md`,
+                content: `# Forensic Custody Log Entry
+
+**Date:** ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+**Role ID:** ${roleId}
+**Action:** ${action}
+**Session ID:** ${details.sessionId || 'N/A'}
+
+## Details
+${JSON.stringify(details, null, 2)}
+
+## Audit Trail
+This action has been logged in the immutable forensic custody chain.
+All timestamps are in IST (Indian Standard Time).
+
+---
+*Generated by Nyay AI - Digital Forensic Chain Ledger*
+`
+            };
+
+            // Store log in localStorage (in production, this would be sent to backend)
+            const logs = JSON.parse(localStorage.getItem('nyai_forensic_logs') || '[]');
+            logs.push(logEntry);
+            localStorage.setItem('nyai_forensic_logs', JSON.stringify(logs));
+            
+            console.log(`📝 Forensic log created: ${logEntry.filename}`);
+        }
+
+        function redirectToDashboard(role) {
+            // Strict DOM unmounting - ensure clean state before navigation
+            // This prevents unauthorized access to other dashboard components
+            const dashboards = {
+                INVESTIGATING_OFFICER: 'officer-dashboard.html',
+                MEDICAL_OFFICER: 'medical-dashboard.html',
+                LAB_TECHNICIAN: 'lab-dashboard.html',
+                JUDGE: 'judge-dashboard.html'
             };
             
-            auditLog.push(logEntry);
-            localStorage.setItem('nyai_audit_log', JSON.stringify(auditLog));
-            
-            // Also add to evidence-specific audit log
-            if (evidenceId && evidenceId !== 'N/A') {
-                const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${evidenceId}`) || 'null');
-                if (evidence) {
-                    if (!evidence.auditLog) {
-                        evidence.auditLog = [];
-                    }
-                    evidence.auditLog.push(logEntry);
-                    localStorage.setItem(`nyai_evidence_${evidenceId}`, JSON.stringify(evidence));
-                }
-            }
+            // Redirect to authorized dashboard only
+            window.location.href = dashboards[role];
         }
 
-        // Get audit logs for specific evidence
-        function getEvidenceAuditLog(evidenceId) {
-            const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${evidenceId}`) || 'null');
-            return evidence ? (evidence.auditLog || []) : [];
-        }
-
-        // ============================================
-        // LAYER 5: COURT REPORT GENERATOR
-        // ============================================
-
-        // Open Court Report Modal
-        function openCourtReport(evidenceId) {
-            // Zero-Trust: Check permission
-            if (!checkPermission('generateReport')) {
-                blockUnauthorizedAction('Generate Court Report');
-                return;
-            }
-
-            // Log the action
-            addAuditLog('REPORT_GENERATED', evidenceId, {
-                generatedBy: document.getElementById('userId').value,
-                generatedAt: new Date().toISOString()
-            });
-
-            const evidence = JSON.parse(localStorage.getItem(`nyai_evidence_${evidenceId}`));
-            if (!evidence) {
-                alert('Evidence not found!');
-                return;
-            }
-
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            const reportId = `RPT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-            // Populate report metadata
-            document.getElementById('reportGeneratedTime').textContent = new Date().toLocaleString();
-            document.getElementById('reportGeneratedBy').textContent = `${permissions.name} (${document.getElementById('userId').value})`;
-            document.getElementById('reportEvidenceId').textContent = evidence.id;
-            document.getElementById('reportCaseNumber').textContent = evidence.caseNumber;
-            document.getElementById('reportId').textContent = reportId;
-
-            // Populate evidence details
-            document.getElementById('reportCategory').textContent = evidence.category;
-            document.getElementById('reportStatus').textContent = evidence.status;
-            document.getElementById('reportDescription').textContent = evidence.description;
-            document.getElementById('reportRegisteredBy').textContent = `${evidence.registeredBy} (${evidence.officerId}) on ${new Date(evidence.timestamp).toLocaleString()}`;
-
-            // Populate integrity proof
-            document.getElementById('reportEvidenceHash').textContent = evidence.evidenceHash;
-            document.getElementById('reportPhotoHash').textContent = evidence.photoHash;
-
-            // Add verification history
-            const verificationHistory = evidence.verificationHistory || [];
-            const verificationHistoryHTML = verificationHistory.length > 0 ? `
-                <div class="mt-4 p-3 bg-white rounded border border-green-300">
-                    <p class="text-sm font-semibold text-green-800 mb-2">Verification History:</p>
-                    ${verificationHistory.map(v => `
-                        <div class="text-xs text-gray-700 mb-1">
-                            ✓ Verified on ${new Date(v.timestamp).toLocaleString()} - Status: ${v.status}
-                        </div>
-                    `).join('')}
-                </div>
-            ` : '<p class="text-sm text-gray-600 mt-2">No verification history available.</p>';
-            document.getElementById('reportVerificationHistory').innerHTML = verificationHistoryHTML;
-
-            // Populate chain of custody timeline
-            const history = evidence.history || [];
-            const timelineHTML = history.map((entry, index) => {
-                const isLatest = index === history.length - 1;
-                const icon = entry.action === 'Registered' ? '📝' : entry.action === 'Lab Analysis Completed' ? '🔬' : '🔄';
-                
-                return `
-                    <div class="relative pl-8 pb-4 ${index < history.length - 1 ? 'border-l-2 border-gray-300' : ''}">
-                        <div class="absolute left-0 top-0 w-6 h-6 rounded-full ${isLatest ? 'bg-green-500' : 'bg-gray-400'} flex items-center justify-center text-white text-xs font-bold" style="margin-left: -13px;">
-                            ${index + 1}
-                        </div>
-                        <div class="bg-gray-50 rounded p-3">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-semibold text-gray-800">${icon} ${entry.action}</span>
-                                <span class="text-xs text-gray-500">${new Date(entry.timestamp).toLocaleString()}</span>
-                            </div>
-                            ${entry.action === 'Registered' ? `
-                                <p class="text-xs text-gray-700">By: ${entry.performedBy} (${entry.officerId})</p>
-                                <p class="text-xs text-gray-700">Location: ${entry.location.latitude.toFixed(6)}, ${entry.location.longitude.toFixed(6)}</p>
-                            ` : entry.action === 'Transferred' ? `
-                                <p class="text-xs text-gray-700">To: ${entry.receiverName} (${entry.receiverId})</p>
-                                <p class="text-xs text-gray-700">Destination: ${entry.destination}</p>
-                                <p class="text-xs text-gray-700">Condition: ${entry.condition}</p>
-                            ` : `
-                                <p class="text-xs text-gray-700">By: ${entry.performedBy} (${entry.officerId})</p>
-                            `}
-                            <p class="text-xs text-gray-600 mt-1">Notes: ${entry.notes}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            document.getElementById('reportTimeline').innerHTML = timelineHTML;
-
-            // Populate lab findings if available
-            const labFindings = evidence.labFindings || [];
-            if (labFindings.length > 0) {
-                document.getElementById('reportLabFindingsSection').classList.remove('hidden');
-                const labFindingsHTML = labFindings.map((finding, index) => `
-                    <div class="mb-4 p-3 bg-white rounded border border-blue-300">
-                        <p class="font-semibold text-blue-900 mb-2">Test ${index + 1}: ${finding.testType}</p>
-                        <p class="text-sm text-gray-700 mb-1"><strong>Result Status:</strong> ${finding.resultStatus}</p>
-                        <p class="text-sm text-gray-700 mb-1"><strong>Findings:</strong> ${finding.findings}</p>
-                        <p class="text-sm text-gray-700 mb-1"><strong>Technician:</strong> ${finding.technicianId}</p>
-                        <p class="text-xs text-gray-600"><strong>Date:</strong> ${new Date(finding.timestamp).toLocaleString()}</p>
-                        ${finding.notes ? `<p class="text-xs text-gray-600 mt-1"><strong>Notes:</strong> ${finding.notes}</p>` : ''}
-                    </div>
-                `).join('');
-                document.getElementById('reportLabFindings').innerHTML = labFindingsHTML;
-            } else {
-                document.getElementById('reportLabFindingsSection').classList.add('hidden');
-            }
-
-            // Populate audit log
-            const auditLog = getEvidenceAuditLog(evidenceId);
-            const auditLogHTML = auditLog.length > 0 ? auditLog.map(log => `
-                <div class="text-xs bg-white p-2 rounded border border-yellow-300">
-                    <span class="font-semibold text-yellow-900">${log.action}</span> - 
-                    ${log.roleName} (${log.roleId}) - 
-                    ${new Date(log.timestamp).toLocaleString()}
-                </div>
-            `).join('') : '<p class="text-sm text-gray-600">No audit logs available.</p>';
-            document.getElementById('reportAuditLog').innerHTML = auditLogHTML;
-
-            // Show modal
-            document.getElementById('courtReportModal').classList.remove('hidden');
-        }
-
-        // Close Court Report Modal
-        function closeCourtReport() {
-            document.getElementById('courtReportModal').classList.add('hidden');
-        }
-
-        // Download Report as PDF (uses browser print to PDF)
-        function downloadReportPDF() {
-            window.print();
-        }
-
-        // ============================================
-        // ENHANCED PERMISSION CHECK
-        // ============================================
-
-        // Update the existing checkPermission function to include report generation
-        const originalCheckPermission = checkPermission;
-        checkPermission = function(action) {
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            
-            switch(action) {
-                case 'register':
-                    return permissions.canRegister;
-                case 'transfer':
-                    return permissions.canTransfer;
-                case 'verify':
-                    return permissions.canVerify;
-                case 'viewFull':
-                    return permissions.canViewFull;
-                case 'addLabFindings':
-                    return permissions.canAddLabFindings;
-                case 'viewLabFindings':
-                    return permissions.canViewLabFindings;
-                case 'generateReport':
-                    return permissions.canGenerateReport || false;
-                default:
-                    return false;
-            }
-        };
-
-        // ============================================
-        // INITIALIZE AUDIT SYSTEM ON PAGE LOAD
-        // ============================================
-        
-        // Update the DOMContentLoaded event listener
-        const originalDOMContentLoaded = document.addEventListener('DOMContentLoaded', function() {
-            initializeAuditLog();
-            initializeRoleSystem();
-            loadEvidenceList();
-            setupEventListeners();
-            attemptAutoGPS();
-            
-            // Add audit log for page load
-            addAuditLog('SYSTEM_ACCESS', 'N/A', {
-                action: 'User accessed the system',
-                timestamp: new Date().toISOString()
-            });
-        });
-
-        // Enhanced setupEventListeners to include report modal
-        const originalSetupEventListeners = setupEventListeners;
-        setupEventListeners = function() {
-            document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
-            document.getElementById('captureGPS').addEventListener('click', captureGPS);
-            document.getElementById('evidenceForm').addEventListener('submit', handleSubmit);
-            document.getElementById('resetBtn').addEventListener('click', resetForm);
-            document.getElementById('closeModal').addEventListener('click', closeModal);
-            document.getElementById('downloadQR').addEventListener('click', downloadQRCode);
-            document.getElementById('refreshList').addEventListener('click', loadEvidenceList);
-            
-            // Transfer modal listeners
-            document.getElementById('closeTransferModal').addEventListener('click', closeTransferModal);
-            document.getElementById('cancelTransfer').addEventListener('click', closeTransferModal);
-            document.getElementById('transferForm').addEventListener('submit', handleTransfer);
-            
-            // Lab findings modal listeners
-            document.getElementById('closeLabFindingsModal').addEventListener('click', closeLabFindingsModal);
-            document.getElementById('cancelLabFindings').addEventListener('click', closeLabFindingsModal);
-            document.getElementById('labFindingsForm').addEventListener('submit', handleLabFindings);
-            
-            // Tracking listeners
-            document.getElementById('closeTracking').addEventListener('click', closeTracking);
-            
-            // Court Report modal listeners
-            document.getElementById('closeReportModal').addEventListener('click', closeCourtReport);
-            document.getElementById('closeReport').addEventListener('click', closeCourtReport);
-            document.getElementById('downloadReportPDF').addEventListener('click', downloadReportPDF);
-            
-            // Victim Case ID listener - auto-refresh when case ID is entered
-            document.getElementById('victimCaseId').addEventListener('input', function() {
-                if (currentRole === 'victim' && this.value.trim().length > 0) {
-                    loadEvidenceList();
-                }
-            });
-            
-            // Also refresh on blur (when user clicks away)
-            document.getElementById('victimCaseId').addEventListener('blur', function() {
-                if (currentRole === 'victim' && this.value.trim().length > 0) {
-                    loadEvidenceList();
-                }
-            });
-        };
-
-        // Enhanced role switching with audit logging
-        const originalUpdateRoleUI = updateRoleUI;
-        updateRoleUI = function() {
-            const permissions = ROLE_PERMISSIONS[currentRole];
-            const roleDescription = document.getElementById('roleDescription');
-            const victimCaseId = document.getElementById('victimCaseId');
-            const registrationForm = document.getElementById('evidenceForm').parentElement;
-            
-            // Log role switch
-            addAuditLog('ROLE_SWITCH', 'N/A', {
-                newRole: permissions.name,
-                timestamp: new Date().toISOString()
-            });
-            
-            // Update role description
-            roleDescription.textContent = permissions.description;
-            
-            // Show/hide registration form
-            if (permissions.canRegister) {
-                registrationForm.classList.remove('hidden');
-            } else {
-                registrationForm.classList.add('hidden');
-            }
-            
-            // Enable/disable victim case ID
-            victimCaseId.disabled = currentRole !== 'victim';
-            
-            // Update user ID placeholder
-            const userIdInput = document.getElementById('userId');
-            switch(currentRole) {
-                case 'officer':
-                    userIdInput.placeholder = 'OFF-XXXXX';
-                    userIdInput.value = 'OFF-12345';
-                    break;
-                case 'lab_tech':
-                    userIdInput.placeholder = 'LAB-XXXXX';
-                    userIdInput.value = 'LAB-001';
-                    break;
-                case 'judge':
-                    userIdInput.placeholder = 'JDG-XXXXX';
-                    userIdInput.value = 'JDG-789';
-                    break;
-                case 'victim':
-                    userIdInput.placeholder = 'VIC-XXXXX';
-                    userIdInput.value = 'VIC-456';
-                    victimCaseId.value = 'CR-2026-MH-5678';
-                    break;
-            }
-        };
-
-        // Close tracking
-        function closeTracking() {
-            document.getElementById('trackingSection').classList.add('hidden');
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('errorMessage').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     </script>
 </body>
