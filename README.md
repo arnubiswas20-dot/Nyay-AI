@@ -28,4 +28,4 @@ Nyay AI implements a Digital Forensic Chain Ledger (DFCL):
 4. Download the generated court report for official use.
 
 ---
-Developed by Team Justice | IBM Dev Day Hackathon 2026
+Developed by Team Justice | IBM Dev Day Hackathon 2026.
