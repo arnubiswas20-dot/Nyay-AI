@@ -6,7 +6,7 @@ Nyay AI is a blockchain-inspired solution designed to ensure the integrity and t
 [Click here to view the Live Project](https://arnubiswas20-dot.github.io/Nyay-AI/)
 
 ## ⚖️ The Problem
-In modern legal systems, maintaining the 'Chain of Custody' for digital evidence is challenging. Tampering or unauthorized access can lead to the dismissal of crucial evidence.
+While built for sexual violence cases, Nyay AI's forensic chain integrity system directly addresses human trafficking — where the same evidence tampering failures cause a global 0.14% conviction rate."In modern legal systems, maintaining the 'Chain of Custody' for digital evidence is challenging. Tampering or unauthorized access can lead to the dismissal of crucial evidence.
 
 ## 🛡️ Our Solution
 Nyay AI implements a Digital Forensic Chain Ledger (DFCL):
