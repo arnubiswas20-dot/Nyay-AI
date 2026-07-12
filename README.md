@@ -1,6 +1,6 @@
 # Nyay AI: Digital Forensic Chain Ledger (DFCL)
 
-Nyay AI is a blockchain-inspired solution designed to ensure the integrity and transparency of digital forensic evidence. It provides a secure platform for registering, tracking, and verifying evidence using cryptographic hashing.
+"Nyay AI was initially developed to strengthen forensic integrity in sexual violence investigations. During further problem exploration, I found that the same evidence-chain failures significantly affect human trafficking investigations. The current work therefore extends the Digital Forensic Chain Ledger to support both domains, with particular emphasis on combating evidence tampering in human trafficking cases.
 
 ## 🚀 Live Demo
 [Click here to view the Live Project](https://arnubiswas20-dot.github.io/Nyay-AI/)
